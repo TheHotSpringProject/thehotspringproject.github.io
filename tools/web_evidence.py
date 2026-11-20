@@ -6,7 +6,7 @@
 Google results are stored only as minimal facts for classification (no photos, reviews or text)."""
 import asyncio, json, re, sys, urllib.parse, urllib.request
 sys.stdout.reconfigure(line_buffering=True)
-UA = {'User-Agent': 'hotsprings-map/1.0 (https://hotsprings.hydrologicinsights.com/)'}
+UA = {'User-Agent': 'hotsprings-map/1.0 (https://thehotspringproject.github.io/)'}
 
 # ---- 1. Wikipedia list
 def wget(url):
@@ -74,7 +74,7 @@ async def places():
         b = await p.chromium.launch()
         pg = await b.new_page()
         pg.on('console', lambda m: print('page:', m.text) if m.text.startswith('places') else None)
-        await pg.goto('https://hotsprings.hydrologicinsights.com/', wait_until='networkidle', timeout=120000)
+        await pg.goto('https://thehotspringproject.github.io/', wait_until='networkidle', timeout=120000)
         res = await pg.evaluate(JS, [[i, la, lo] for i, la, lo in todo])
         await b.close()
         return res

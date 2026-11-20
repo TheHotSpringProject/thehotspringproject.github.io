@@ -8,7 +8,7 @@ Google requests are blocked: no paid Places lookups, no Google contributor photo
 import asyncio, base64, os, pathlib, sys
 from playwright.async_api import async_playwright
 
-SITE = 'https://hotsprings.hydrologicinsights.com/'
+SITE = 'https://thehotspringproject.github.io/'
 OUT = 'store/screens'
 FONTS = pathlib.Path(__file__).parent / 'fonts'
 
