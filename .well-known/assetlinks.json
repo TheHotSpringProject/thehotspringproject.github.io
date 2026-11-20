@@ -11,5 +11,17 @@
         "61:64:EF:F8:3F:BA:28:78:A8:33:17:8A:F9:D4:8D:D9:B7:DC:5A:0B:42:0B:5C:F2:4E:1C:10:65:8B:E9:E5:03"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.thehotspringproject.app",
+      "sha256_cert_fingerprints": [
+        "E4:65:6B:43:40:83:E4:44:44:9E:13:BF:C4:9B:26:CC:30:6B:A1:36:98:7E:8D:5C:75:9F:FE:1C:D3:79:21:3E"
+      ]
+    }
   }
 ]
