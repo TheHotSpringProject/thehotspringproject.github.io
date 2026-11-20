@@ -1,0 +1,23 @@
+name: Canadian springs data
+# Manual only. Fetches Yukon thermal springs, CGNDB spring names and the GSC OF 6167 text into data/.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: sudo apt-get install -y poppler-utils >/dev/null && pip install pyshp pyproj
+      - run: python tools/canada.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/ca_raw.json; git add data/ca_of*.txt 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "Update Canadian springs raw data"
+          git pull --rebase && git push

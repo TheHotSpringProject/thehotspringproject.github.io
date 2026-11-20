@@ -1,0 +1,17 @@
+name: Check store links
+# Manual only. Fetches every link in the Play description and reports status, final URL and page title.
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check links
+        run: |
+          UA='Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
+          for pass in 1 2; do for u in $(grep -o 'https://[^ ]*' store/full_description.txt) $(cat store/candidate_links.txt 2>/dev/null); do
+            out=$(curl -sL -A "$UA" -o /tmp/p.html -w '%{http_code} %{url_effective} %{time_total}s' --max-time 30 "$u" || echo "FAIL")
+            t=$(grep -o -i '<title[^>]*>[^<]*' /tmp/p.html 2>/dev/null | head -1 | sed 's/<title[^>]*>//' | tr -s ' \n' ' ' | cut -c1-90)
+            echo "LINK$pass $u => $out | $t"
+          done; sleep 20; done

@@ -1,0 +1,22 @@
+name: Soaking evidence (OpenStreetMap + Wikipedia)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python tools/rec_evidence.py
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/rec_evidence.json
+          git diff --cached --quiet || git commit -m "Update soaking evidence"
+          git pull --rebase -q || true
+          git push

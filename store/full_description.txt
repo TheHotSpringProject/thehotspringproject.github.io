@@ -1,0 +1,53 @@
+Not a government app: The Hot Springs Project is an independent app. It is not affiliated with, endorsed by, or acting for NOAA, the U.S. Geological Survey (USGS), the EPA, the National Park Service, Natural Resources Canada, Parks Canada, or any federal, state, provincial, territorial, or tribal agency. It uses publicly released government data; the official sources are linked at the end of this description and on the app's About page.
+
+Find a hot spring for your next soak, road trip, or geology outing. The Hot Springs Project maps about 6,000 thermal springs across North America, from Alaska and the Yukon to New Mexico, each colored by water temperature on a smooth scale from cool blue to near-boiling red.
+
+FIND A PLACE TO SOAK
+• Known soaking spots stand out: a house icon for commercial ones (resorts, pools, bathhouses) and a hot-spring icon for wild ones
+• Filter to commercial spots, wild spots, or both
+
+EVERYTHING ABOUT A SPRING
+• Tap any spring for its temperature, newer readings where available, location, land manager, description, and photos
+• One tap opens directions
+
+SORT AND FILTER EVERY SPRING
+• Search by name, or filter by state, land ownership, and soaking estimate
+• Set a minimum temperature anywhere from 80°F to 212°F
+• Sort hottest, coolest, or nearest to you (your location stays on your device)
+• Expand the results into a full table
+
+MAPS FOR EVERY TRIP
+• Topo, satellite, shaded relief, and street basemaps
+• Save map areas to use offline where there's no signal
+• Turn on about 33,000 more named springs from USGS place names
+• Save springs and mark the ones you've visited
+• Works on phones, tablets, and computers, in °F or °C
+
+The soaking estimate is the app's own judgement from public information. Always check access, safety, and current rules before you go: many springs are on private land, some are closed, and some are hot enough to scald.
+
+OFFICIAL DATA SOURCES
+• Spring locations and temperatures: NOAA, Thermal Springs List for the United States (1980), Key to Geophysical Records Documentation No. 12
+https://catalog.data.gov/dataset/thermal-springs-list-for-the-united-states-ncei-accession-0303600
+https://www.osti.gov/biblio/6737326
+• Spring temperature readings: Water Quality Portal (USGS, EPA, and partner agencies)
+https://www.waterqualitydata.us/
+• Named springs: USGS Geographic Names Information System (GNIS)
+https://www.usgs.gov/us-board-on-geographic-names/download-gnis-data
+• Land ownership: USGS Protected Areas Database of the United States (PAD-US)
+https://www.usgs.gov/data/protected-areas-database-united-states-pad-us-4
+• Topographic and imagery basemaps: USGS The National Map
+https://apps.nationalmap.gov/help/HowTo.htm
+• New Mexico springs: New Mexico Bureau of Geology and Mineral Resources, via the U.S. Department of Energy Geothermal Data Repository
+https://www.osti.gov/dataexplorer/biblio/1223849
+• Nevada springs: Nevada Bureau of Mines and Geology geothermal database
+https://data.nbmg.unr.edu/Public/Geothermal/Data/GeothermalData/_metadata/HTML_Files/HotSpringsAndWells.html
+• Canadian springs: Yukon Geological Survey, Geothermal Thermal Springs
+https://map-data.service.yukon.ca/geoyukon/Geological/Geothermal_Thermal_Springs/
+• Canadian spring names: Natural Resources Canada, Canadian Geographical Names Database
+https://natural-resources.canada.ca/maps-tools-publications/maps/geographical-names-canada/download-geographical-names-data
+• Other state survey records: state geological surveys via the National Geothermal Data System (AASG-GDS)
+https://doi.org/10.5281/zenodo.8125526
+
+Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Other maps: Esri, OpenTopoMap, and OpenStreetMap contributors.
+
+No ads. No account. The app collects no personal data.

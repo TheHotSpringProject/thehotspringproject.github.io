@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Hot Springs Project · North American hot springs map</title>
+<meta name="description" content="Interactive map of thousands of North American springs, hot to cool, from NOAA's Thermal Springs List, state geological surveys, the Water Quality Portal and USGS place names, with topo, satellite and street basemaps.">
+<link rel="icon" href="favicon.ico?v=5" sizes="16x16 32x32 48x48">
+<link rel="icon" href="assets/fav-32.png?v=5" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/fav-96.png?v=5" sizes="96x96" type="image/png">
+<link rel="icon" href="assets/fav-192.png?v=5" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/touch-180.png?v=5">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hot Springs">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f0e4">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="style.css?v=34">
+</head>
+<body>
+<header>
+  <button class="sealbtn" id="aboutbtn" title="About this map" aria-haspopup="dialog"><img class="seal" src="assets/logo-96.png?v=4" srcset="assets/logo-96.png?v=4 1x, assets/logo-192.png?v=4 2x" alt="About this map"></button>
+  <div class="htxt"><h1>The Hot Springs Project</h1><div class="sub">US springs · data: NOAA Thermal Springs List (1980), state geological surveys and USGS</div></div>
+  <button class="installbtn" id="installbtn" hidden title="Install as an app">Install app</button>
+</header>
+<div class="app rc" id="app">
+  <div id="mapwrap">
+    <div id="map" aria-label="Map of US thermal springs"></div>
+    <div class="offline" id="offline" hidden role="status" aria-live="polite"><svg class="oi" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M8.5 8.6A5 5 0 0 0 6 18h11m3.3-1.9A4 4 0 0 0 17 9.1a6 6 0 0 0-6.6-4"/></svg><div class="ot"><b id="offttl">You're offline</b><span id="offmsg"></span></div><button type="button" class="ob" id="offgo">Saved areas</button><button type="button" class="ox" id="offx" title="Hide" aria-label="Hide offline notice">✕</button></div>
+    <div class="offpanel" id="offpanel" hidden role="dialog" aria-label="Save this area for offline"></div>
+    <div class="bm" id="bm">
+      <button id="bmbtn" aria-expanded="false"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 1 8l11 6 11-6zm-9.2 9.5L1 12.5l11 6 11-6-1.8-1-9.2 5zm0 4L1 16.5l11 6 11-6-1.8-1-9.2 5z"/></svg>Basemap</button>
+      <div class="menu">
+        <div class="grid" id="bmgrid"></div>
+        <div class="hdr">Overlays</div>
+        <label><input type="checkbox" id="ovLabels"> Roads &amp; place labels <span class="hint">(on with Dark)</span></label>
+        <div class="hdr" id="offhdr">Offline areas</div>
+        <div id="offareas"></div>
+      </div>
+    </div>
+    <div class="legend" id="legend">
+      <button class="lh" id="legbtn" aria-expanded="true" title="Show or hide the legend"><span class="chev">▸</span>Temperature<span class="mini mramp"></span></button>
+      <div class="lb" id="legbody">
+        <div class="ramp" title="Colour follows the measured temperature. Springs listed only as boiling, hot or warm use a typical colour for that label."><div class="rbar"></div><div class="rticks" id="rticks"><span data-f="60" style="left:0%">60°</span><span data-f="90" style="left:21.4%">90°</span><span data-f="120" style="left:42.9%">120°</span><span data-f="160" style="left:71.4%">160°</span><span data-f="200" style="left:100%">200°</span></div><div class="rnote"><span>cool</span><span>near boiling</span></div></div>
+        <div class="nodata"><span class="dot" style="background:var(--na)"></span>No reading</div>
+        <div class="soakkey" title="Soaking estimate. Commercial: resort, pool or bathhouse. Wild: undeveloped pools people use. Colour still shows temperature."><div><span class="si"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.6" fill="#f5962a" stroke="rgba(0,0,0,.75)" stroke-width="1.2"/><path d="M12 5.2 5.6 10.6h1.9v7.2h3.6v-4.4h1.8v4.4h3.6v-7.2h1.9z" fill="#fff"/></svg></span>Commercial soak</div><div><span class="si"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.6" fill="#f5962a" stroke="rgba(0,0,0,.75)" stroke-width="1.2"/><g fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M5.8 13.6c1.2 3.6 11.2 3.6 12.4 0"/><path d="M9 12c-1-1.3 1-2.4 0-3.7s1-2.4 0-3.4"/><path d="M12 12c-1-1.3 1-2.4 0-3.7s1-2.4 0-3.4"/><path d="M15 12c-1-1.3 1-2.4 0-3.7s1-2.4 0-3.4"/></g></svg></span>Wild soak</div><div><span class="dot faint"></span>Other springs</div></div>
+        <label class="named" title="About 35,000 springs from USGS place names, mostly cool and without readings. Shown from zoom 8 in."><input type="checkbox" id="namedChk" autocomplete="off"><span class="dot" style="background:#a9c6de;border:1px solid #2f5674"></span>Named springs <span class="nh" id="namedHint"></span></label>
+      </div>
+    </div>
+  </div>
+  <aside>
+    <div class="panel-h"><button class="fold" id="fold" aria-expanded="false" aria-controls="controls"><span class="chev">▸</span> Filter Results <span class="active" id="active"></span></button><span class="units" id="units"><button data-u="F" class="on">°F</button><button data-u="C">°C</button></span></div>
+    <form class="controls" id="controls" hidden autocomplete="off" onsubmit="return false">
+      <input type="search" id="q" placeholder="Search by name (e.g. Burgdorf, Chena)…" autocomplete="off">
+      <div class="row">
+        <select id="state"><option value="">All states and provinces</option></select>
+        <select id="sort"><option value="name">Sort: name</option><option value="hot">Sort: hottest</option><option value="cold">Sort: coolest</option><option value="near">Sort: nearest to me</option></select>
+      </div>
+      <select id="land" title="Filter by land ownership (USGS PAD-US)">
+        <option value="">Land: any ownership</option>
+        <option value="public">On public land</option>
+        <option value="open">On public land &amp; open access</option>
+        <option value="limited">On public land without open access</option>
+        <option value="private">On private land</option>
+      </select>
+      <select id="soak" title="Whether people soak there (an estimate for springs 90°F and warmer)">
+        <option value="">Soaking: any</option>
+        <option value="DW">Known soaking spots (commercial + wild)</option>
+        <option value="D">Known spots: commercial (resort, pool, bathhouse)</option>
+        <option value="W">Known spots: wild (undeveloped)</option>
+        <option value="P">Possibly used</option>
+        <option value="N">Unlikely or not allowed</option>
+      </select>
+      <select id="src" title="Which list the spring comes from">
+        <option value="">Source: all springs</option>
+        <option value="noaa">NOAA 1980 list only</option>
+        <option value="added">Added from other sources</option>
+        <option value="ca">Canada</option>
+        <option value="ss">With newer readings or locations</option>
+      </select>
+      <select id="mine" title="Your saved and visited springs">
+        <option value="">All springs</option>
+        <option value="saved">My saved springs</option>
+        <option value="visited">Springs I've visited</option>
+        <option value="notvisited">Not visited yet</option>
+      </select>
+      <label class="inview"><input type="checkbox" id="inView" checked> Only list springs in the current map view</label>
+      <div class="range">Min temp <input type="range" id="minT" min="40" max="212" step="1" value="80" autocomplete="off" title="Springs cooler than this are hidden. Slide all the way left to show every spring."><span id="minTv"></span></div>
+    </form>
+    <div id="detail"></div>
+    <div class="panel-h"><button class="fold" id="rfold" aria-expanded="false" aria-controls="list"><span class="chev">▸</span> Results</button><span><span id="count"></span><button class="maxbtn" id="maxbtn" title="Expand the results table">⤢ Expand</button></span></div>
+    <div class="thead"><span></span><span>Name</span><span>State/prov.</span><span>°F</span><span>°C</span><span>Class</span><span>Land</span><span>USGS quadrangle</span><span class="dcol">Distance</span><span></span><span></span></div>
+    <div id="list"></div>
+    <div class="foot">1,661 springs from the <i>Thermal Springs List for the United States</i> (NOAA, 1980), plus springs, newer readings and locations from state geological surveys (National Geothermal Data System, CC BY 4.0), the Nevada Bureau of Mines and Geology, the New Mexico Bureau of Geology (CC BY 4.0) and the Water Quality Portal; named springs from USGS place names. See About for full credits. Many springs are on private or closed land; check access before you go. Land ownership is from USGS PAD-US 4.1, checked at each listed location — older coordinates can be off, so confirm on a map before you go.</div>
+  </aside>
+</div>
+<dialog id="about" aria-labelledby="aboutTitle">
+  <button class="ab-close" id="aboutClose" title="Close" aria-label="Close">✕</button>
+  <img class="ab-logo" src="assets/logo-wordmark.png?v=5" alt="The Hot Springs Project">
+  <h2 id="aboutTitle">About this map</h2>
+  <p>This map was inspired by NOAA's former hot springs viewer, which the National Geophysical Data Center ran until it was retired in 2025. It shows all 1,661 thermal springs in the <i>Thermal Springs List for the United States</i>, compiled by Berry, Grim and Ikelman for NOAA in 1980, plus thousands more springs, hot to cool, from state geological surveys and the Water Quality Portal, and about 90 Canadian springs from the Yukon Geological Survey, Natural Resources Canada's place names and OpenStreetMap, with newer temperature readings and more precise locations where those sources have them. A separate <b>Named springs</b> layer (in the legend) adds about 33,000 springs from USGS place names. Use it to find a warm soak near your next trip, see which springs sit on public land, and jump straight to directions.</p>
+  <h3>What you can do</h3>
+  <ul>
+    <li>Browse springs on topo, satellite, street or shaded-relief maps.</li>
+    <li>Filter by name, state, minimum temperature and land ownership, or sort by distance from you.</li>
+    <li>Tap a spring for its temperature, location, land manager, photos and a description, with a one-tap link to Google Maps.</li>
+  </ul>
+  <p class="disclaim"><b>Not a government app.</b> The Hot Springs Project is an independent app. It is not affiliated with, endorsed by or acting for NOAA, the U.S. Geological Survey, the EPA, the National Park Service, Natural Resources Canada, Parks Canada or any federal, state, provincial, territorial or tribal agency. It uses publicly released government data, linked below to the official sources.</p>
+  <h3>Where the information comes from</h3>
+  <ul>
+    <li><b>Springs:</b> NOAA Key to Geophysical Records Doc. No. 12 (1980), official copy at the <a href="https://repository.library.noaa.gov/view/noaa/13426" target="_blank" rel="noopener">NOAA Institutional Repository</a>.</li>
+    <li><b>State survey springs, readings and locations:</b> state geological surveys via the National Geothermal Data System, republished as AASG-GDS (Zaffos and Richard, 2025, <a href="https://doi.org/10.5281/zenodo.8125526" target="_blank" rel="noopener">doi:10.5281/zenodo.8125526</a>, CC BY 4.0). Each spring lists its original source.</li>
+    <li><b>Nevada springs and readings:</b> Nevada Bureau of Mines and Geology <a href="https://data.nbmg.unr.edu/Public/Geothermal/Data/GeothermalData/_metadata/HTML_Files/HotSpringsAndWells.html" target="_blank" rel="noopener">geothermal database</a> (Hot Springs and Wells), with each record's original reference.</li>
+    <li><b>Canadian springs:</b> Yukon Geological Survey <a href="https://map-data.service.yukon.ca/geoyukon/Geological/Geothermal_Thermal_Springs/" target="_blank" rel="noopener">Geothermal Thermal Springs</a> (names and measured temperatures for the Yukon, northern BC and the western NWT; Open Government Licence – Yukon), the <a href="https://natural-resources.canada.ca/maps-tools-publications/maps/geographical-names-canada/download-geographical-names-data" target="_blank" rel="noopener">Canadian Geographical Names Database</a> (Natural Resources Canada; Open Government Licence – Canada) and OpenStreetMap hot springs (© OpenStreetMap contributors, ODbL). Banff Upper Hot Springs and Cave and Basin are placed by hand. There is no land-ownership layer for Canada, and many Canadian springs have no published temperature yet.</li>
+    <li><b>New Mexico springs and readings:</b> New Mexico Bureau of Geology and Mineral Resources, springs discharging above 30 °C (Kelley, 2015, <a href="https://doi.org/10.15121/1223849" target="_blank" rel="noopener">doi:10.15121/1223849</a>, CC BY 4.0).</li>
+    <li><b>Spring temperatures:</b> the <a href="https://www.waterqualitydata.us/" target="_blank" rel="noopener">Water Quality Portal</a> (USGS, EPA, National Park Service and other agencies), newest reading at each spring site.</li>
+    <li><b>Soaking estimate</b> (springs 90 °F and warmer): this app's own judgement of whether people soak there. <i>Known soaking spots</i> include both commercial ones (resorts, pools, bathhouses) and wild ones (undeveloped pools people use); other springs are marked possibly used, unlikely or not allowed, or no evidence found. It is based on widely known soaking spots, state-by-state web searches, Google Maps place listings, Wikipedia, land status and temperature, and is a guide only: conditions, access and rules change.</li>
+    <li><b>Named springs layer:</b> U.S. Geological Survey, <a href="https://www.usgs.gov/us-board-on-geographic-names/download-gnis-data" target="_blank" rel="noopener">Geographic Names Information System</a> (feature class Spring).</li>
+    <li><b>Land ownership:</b> USGS <a href="https://www.usgs.gov/data/protected-areas-database-united-states-pad-us-4" target="_blank" rel="noopener">Protected Areas Database (PAD-US 4)</a>.</li>
+    <li><b>Descriptions &amp; photos:</b> Wikipedia, Wikimedia Commons and Google Maps contributors, credited on each spring.</li>
+    <li><b>Maps:</b> USGS, Esri, OpenTopoMap and OpenStreetMap contributors.</li>
+  </ul>
+  <h3>Get the app</h3>
+  <p id="installHelp">Install this map on your phone for a home-screen icon, full-screen view and offline use. <b>iPhone/iPad:</b> open the site in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. <b>Android/Chrome:</b> tap <b>Install app</b> below or in the browser menu.</p>
+  <button class="ab-install" id="aboutInstall" hidden>Install app</button>
+  <p class="ab-warn">Much of this data is decades old and locations can be off. Many springs are on private or closed land, so check access and conditions before you go, and leave no trace.</p>
+  <a class="ab-gh" href="https://github.com/TheHotSpringProject/app" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View the project on GitHub</a>
+  <p class="ab-foot">An independent project · <a href="privacy.html">Privacy policy</a></p>
+</dialog>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="config.js?v=13"></script>
+<script src="app.js?v=64"></script>
+</body>
+</html>

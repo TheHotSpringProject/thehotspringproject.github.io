@@ -1,0 +1,23 @@
+name: Store screenshots
+# Manual only. Loads the live site in headless Chrome (map tiles load here) and saves Play Store screenshots.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install playwright && python -m playwright install --with-deps chromium
+      - run: python tools/screenshots.py
+      - name: Commit screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add store/screens
+          git diff --cached --quiet || git commit -m "Update store screenshots"
+          git pull --rebase && git push
