@@ -288,7 +288,8 @@
     return (!st || d.st === st) && (!term || d.name.toLowerCase().includes(term) || (d.alt && d.alt.toLowerCase().includes(term))) && (m <= 40 || (estF(d) == null ? m <= 80 : estF(d) >= m));   // springs with no temperature at all stay visible up to the 80°F default
   }
   function update() {
-    const inView = $('inView').checked && !document.querySelector('.app').classList.contains('max') ? map.getBounds() : (lastBounds && $('inView').checked ? lastBounds : null);
+    // A name search looks through every spring, not just the ones in view, so a match anywhere can be found.
+    const inView = q.value.trim() ? null : $('inView').checked && !document.querySelector('.app').classList.contains('max') ? map.getBounds() : (lastBounds && $('inView').checked ? lastBounds : null);
     const visible = [];
     S.forEach(d => {
       const ok = passes(d);
@@ -333,10 +334,14 @@
   list.addEventListener('click', e => {
     if (e.target.closest('a')) return;
     const it = e.target.closest('.it'); if (!it) return;
+    goTo(S[+it.dataset.i]);
+  });
+  // Fly to a spring picked from the list or the search box
+  function goTo(d) {
     if (app.classList.contains('max')) toggleMax(false);
     if (window.innerWidth <= 760) $('mapwrap').scrollIntoView({behavior:'smooth', block:'start'});
-    select(S[+it.dataset.i], true);
-  });
+    select(d, true);
+  }
 
   // ---------- Selection, popup, detail ----------
   // The popup is the main info card for a spring; "More" opens the full panel (photos, description, sources).
@@ -561,6 +566,15 @@
   const fold = $('fold'), ctr = $('controls');
   fold.onclick = () => { const open = ctr.hidden; ctr.hidden = !open; fold.setAttribute('aria-expanded', open); if (open) q.focus({preventScroll:true}); };
   q.addEventListener('input', update);
+  // Enter in the search box goes to the best match: an exact name first, then a name that starts with the text, then the top of the list
+  q.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault(); update();
+    const t = q.value.trim().toLowerCase(); if (!t || !current.length) return;
+    const nm = d => d.name.toLowerCase();
+    const d = current.find(d => nm(d) === t) || current.find(d => nm(d).startsWith(t)) || current[0];
+    q.blur(); goTo(d);
+  });
   landSel.addEventListener('change', update);
   mineSel.addEventListener('change', update);
   srcSel.addEventListener('change', update);
