@@ -111,13 +111,18 @@ try:
         v = {k: x['value'] for k, x in b.items()}
         qid = v['item'].rsplit('/', 1)[1]
         c = v['coord'].replace('Point(', '').replace(')', '').split()
+        try: float(c[0]); float(c[1])
+        except (ValueError, IndexError): continue
         d = by.setdefault(qid, {'qid': qid, 'name': v.get('itemLabel'), 'en': v.get('enLabel'),
                                 'lon': round(float(c[0]), 5), 'lat': round(float(c[1]), 5)})
         if v.get('iso3'): d['iso3'] = v['iso3']
         if v.get('countryLabel'): d['country'] = v['countryLabel']
         if v.get('temp') and v.get('unit'):
             u = v['unit'].rsplit('/', 1)[1]
-            d['temp'] = [float(v['temp']), {'Q25267': 'C', 'Q42289': 'F', 'Q11579': 'K'}.get(u, u)]
+            try: d['temp'] = [float(v['temp']), {'Q25267': 'C', 'Q42289': 'F', 'Q11579': 'K'}.get(u, u)]
+            except ValueError: pass   # "unknown value" placeholders
+        try: float(c[0]); float(c[1])
+        except (ValueError, IndexError): continue
         if v.get('image'): d['image'] = urllib.parse.unquote(v['image'].rsplit('/', 1)[1])
         if v.get('enwiki'): d['enwiki'] = urllib.parse.unquote(v['enwiki'].rsplit('/', 1)[1]).replace('_', ' ')
     OUT['wd'] = list(by.values()); print('wikidata items', len(OUT['wd']))
