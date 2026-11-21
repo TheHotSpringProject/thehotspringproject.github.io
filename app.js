@@ -248,6 +248,11 @@
       });
       if (g.children.length) $('state').appendChild(g);
     });
+    if (world) {
+      const li = document.createElement('li');
+      li.innerHTML = '<b>Springs outside the US and Canada (preview):</b> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, available under the Open Database License, and <a href="https://www.wikidata.org/" target="_blank" rel="noopener">Wikidata</a> (CC0). Regions from GeoNames (CC BY 4.0). Soaking estimates for these come from map tags and names only.';
+      const ul = document.querySelector('#about ul, dialog ul'); if (ul) ul.appendChild(li);
+    }
     if (world) { const o = document.createElement('option'); o.value = 'world'; o.textContent = 'Outside the US and Canada'; srcSel.insertBefore(o, srcSel.querySelector('option[value="ss"]')); }
     setUnit(unit); restyle(); update();
     openFromHash();

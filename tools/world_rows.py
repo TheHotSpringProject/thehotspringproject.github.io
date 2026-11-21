@@ -124,6 +124,8 @@ for o, gg in zip(osm, geo):
         rec = ['N', 'Tagged no bathing or private (OpenStreetMap)']
     elif yes('bathing') or yes('swimming') or t.get('leisure') == 'bathing_place':
         rec = ['W', 'Tagged for bathing (OpenStreetMap)']
+    elif iso3 == 'ISL' and re.search(r'laug(in)?$', (t.get('name') or w.get('name') or '').lower()):
+        rec = ['W', 'Name means "pool" in Icelandic']
     elif COMM.search(tagtxt) or COMM.search(w.get('en') or ''):
         rec = ['D', 'Name suggests a bath or spa']
     elif tc is not None and tc >= 70:
@@ -134,6 +136,24 @@ for o, gg in zip(osm, geo):
     rows.append([name, iso3, o['lat'], o['lon'], f, c, rec[0], rec[1], gg.get('admin1') or '', src,
                  w.get('enwiki') or '', w.get('image') or '', (o['ids'] or [''])[0], w.get('qid') or '', alt])
 
+# Quality filter: in some countries most OSM "hot_spring" points are mis-tagged (shops, villages, oil wells).
+# A point counts as evidenced if it has a Wikidata/Wikipedia link, a temperature, bath tags, or a spring-like word
+# in its name. Where under 20% of a country's points are evidenced, only the evidenced ones are kept.
+KW = re.compile(r"(hot|warm|thermal|therm|spring|spa\b|onsen|bath|pool|terme|termal|termas|terma|baño|banos|aguas|caliente|heiß|quelle|"
+                r"laug|hver|sulph|sulfur|kaplıca|kaplica|ılıca|ilica|hammam|hamam|banja|banya|toplice|fürdő|furdo|lázně|lazne|source|chaud|"
+                r"fuente|geyser|geysir|vrelo|kupele|kúpele|zdrój|ciepl|горяч|источник|ключ|термал|ванн|温泉|湯|汤|泉|온천|탕|nóng|panas|mainit|"
+                r"brunnen|baden|bagni|bagno|caldo|calda|kolam|ojo|puquio|حمام|عين|ينبوع|حار|چشمه|آب گرم|θερμ|λουτρ|ιαματ|ilidža|banj)", re.I)
+def evidenced(r):
+    return bool(r[13] or r[10] or r[4] is not None or (r[6] in 'DWN' and r[7]) or KW.search(r[0] + ' ' + r[14]))
+share = defaultdict(lambda: [0, 0])
+for r in rows: share[r[1]][0] += 1; share[r[1]][1] += evidenced(r)
+weak = {k for k, (n, e) in share.items() if e / n < 0.2}
+before = len(rows)
+strong = lambda r: bool(r[13] or r[10] or r[4] is not None or (r[6] in 'DWN' and r[7]))
+rows = [r for r in rows if r[1] not in weak or strong(r)]
+print('weak countries', sorted(weak), 'dropped', before - len(rows))
+for k in list(COUNTRY):
+    if not any(r[1] == k for r in rows): COUNTRY.pop(k)
 rows.sort(key=lambda r: (r[1], r[8], r[0]))
 out = {
     'fields': ['name', 'country', 'lat', 'lon', 'temp_f', 'temp_c', 'soak', 'soak_note', 'region', 'sources', 'enwiki', 'commons_image', 'osm_id', 'wikidata', 'native_name'],
