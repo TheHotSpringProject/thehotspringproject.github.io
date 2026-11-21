@@ -30,8 +30,8 @@ SCENES = [
      'esritopo', None, None, '#spring-791', ['legend:wide']),
     ('table', 'Sort and filter every spring', 'A full table of known soaking spots, hottest first',
      'dark', [41.5, -114.5, 4.5], [40.5, -112.5, 5.5], '', ['allspots', 'soak', 'hottest', 'max']),
-    ('satellite', 'Topo, satellite and street maps', 'Save map areas to use offline',
-     'imagery', [44.62, -110.75, 9.5], [44.6, -110.7, 10], '', ['legend:wide']),
+    ('satellite', 'Dark map or USGS topo', 'Save map areas to use offline',
+     'usgstopo', [44.62, -110.75, 9.5], [44.6, -110.7, 10], '', ['legend:wide']),
     ('offline', 'Works with no signal', 'Save trip areas; springs, maps and details work offline',
      'usgstopo', None, None, '#spring-738', ['seedarea', 'offline']),
 ]

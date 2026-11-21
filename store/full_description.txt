@@ -17,7 +17,7 @@ SORT AND FILTER EVERY SPRING
 • Expand the results into a full table
 
 MAPS FOR EVERY TRIP
-• Topo, satellite, shaded relief, and street basemaps
+• Dark map with roads and place names, or the light USGS topo map
 • Save map areas to use offline where there's no signal
 • Turn on about 33,000 more named springs from USGS place names
 • Save springs and mark the ones you've visited
@@ -35,7 +35,7 @@ https://www.waterqualitydata.us/
 https://www.usgs.gov/us-board-on-geographic-names/download-gnis-data
 • Land ownership: USGS Protected Areas Database of the United States (PAD-US)
 https://www.usgs.gov/data/protected-areas-database-united-states-pad-us-4
-• Topographic and imagery basemaps: USGS The National Map
+• Light topographic map: USGS The National Map
 https://apps.nationalmap.gov/help/HowTo.htm
 • New Mexico springs: New Mexico Bureau of Geology and Mineral Resources, via the U.S. Department of Energy Geothermal Data Repository
 https://www.osti.gov/dataexplorer/biblio/1223849
@@ -48,6 +48,6 @@ https://natural-resources.canada.ca/maps-tools-publications/maps/geographical-na
 • Other state survey records: state geological surveys via the National Geothermal Data System (AASG-GDS)
 https://doi.org/10.5281/zenodo.8125526
 
-Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Other maps: Esri, OpenTopoMap, and OpenStreetMap contributors.
+Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Dark map and labels: Esri contributors.
 
 No ads. No account. The app collects no personal data.
