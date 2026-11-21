@@ -135,9 +135,7 @@
     locateCtl.btn.classList.add('busy');
     navigator.geolocation.getCurrentPosition(p => {
       locateCtl.btn.classList.remove('busy');
-      me = [p.coords.latitude, p.coords.longitude];
-      if (meMarker) meMarker.setLatLng(me);
-      else { meMarker = L.circleMarker(me, {radius:7, color:'#fff', weight:2.5, fillColor:'#1a73e8', fillOpacity:1, renderer}).addTo(map); meMarker.bindPopup('You are here'); }
+      gotMe(p);
       if (zoom) map.setView(me, Math.max(map.getZoom(), 8));
       update();
     }, err => {
@@ -145,6 +143,11 @@
       alertMsg('Could not get your location' + (err && err.message ? ': ' + err.message : '.'));
       if ($('sort').value === 'near') { $('sort').value = 'name'; update(); }
     }, {enableHighAccuracy:false, timeout:12000, maximumAge:300000});
+  }
+  function gotMe(p) {
+    me = [p.coords.latitude, p.coords.longitude];
+    if (meMarker) meMarker.setLatLng(me);
+    else { meMarker = L.circleMarker(me, {radius:7, color:'#fff', weight:2.5, fillColor:'#1a73e8', fillOpacity:1, renderer}).addTo(map); meMarker.bindPopup('You are here'); }
   }
   function alertMsg(m) {
     const d = $('detail'); d.style.display = 'block';
@@ -408,6 +411,53 @@
     if ($('detail').style.display === 'block') showDetail(d);   // keep an open panel in step
     openPop(d, fly);
   }
+  // ---------- Discover: photo cards of springs near you, or a random set ----------
+  // Only springs with a freely licensed Wikimedia Commons photo are shown; a card whose photo fails to load is
+  // replaced by the next spring in line.
+  let discList = [], discShown = 0;
+  function openDiscover() {
+    const det = $('detail'); det.style.display = 'block';
+    det.innerHTML = '<div class="dhead"><h2>Discover springs</h2><button class="x" title="Close">✕</button></div>' +
+      '<div class="dbody"><div class="dsub" id="dsub">Finding springs near you…</div><div class="dgrid" id="dgrid"></div>' +
+      '<div class="dmore"><button class="mybtn" id="dmore" hidden>Show more</button><button class="mybtn" id="dshuf" hidden>Shuffle</button></div>' +
+      '<div class="srccite">Photos: Wikimedia Commons. Each spring\'s details credit the photographer and licence.</div></div>';
+    det.scrollTop = 0;
+    det.querySelector('.x').onclick = () => { det.style.display = 'none'; };
+    $('dmore').onclick = () => discMore();
+    $('dshuf').onclick = () => discStart(false);
+    if (me) discStart(true);
+    else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { gotMe(p); update(); discStart(true); }, () => discStart(false), {enableHighAccuracy:false, timeout:8000, maximumAge:600000});
+    else discStart(false);
+  }
+  function discStart(near) {
+    const grid = $('dgrid'); if (!grid) return;
+    discList = S.filter(d => MEDIA[d.i] && MEDIA[d.i][1]);
+    if (near) discList.sort((a, b) => distMi(a) - distMi(b));
+    else discList = discList.map(d => [Math.random() + (d.known ? 0.35 : 0), d]).sort((a, b) => b[0] - a[0]).map(x => x[1]);   // known soaks come up more often
+    discShown = 0; grid.innerHTML = '';
+    $('dsub').textContent = near ? 'The nearest springs with photos' : 'A random selection. Allow location to see springs near you.';
+    $('dshuf').hidden = near;
+    discMore();
+  }
+  function discMore() { for (let k = 0; k < 12; k++) discAdd(); $('dmore').hidden = discShown >= discList.length; }
+  function discAdd() {
+    const grid = $('dgrid'); if (!grid || discShown >= discList.length) { if ($('dmore')) $('dmore').hidden = true; return; }
+    const d = discList[discShown++], dist = distMi(d);
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'dcard ld';
+    const meta = [NAMES[d.st] || d.st, dist != null ? Math.round(dist).toLocaleString() + ' mi' : '', d.f != null ? (unit === 'F' ? d.f + '°F' : d.c + '°C') : ''].filter(Boolean).join(' · ');
+    c.innerHTML = '<span class="dimg"><img alt=""></span><span class="dn"></span><span class="dm"></span>' + (d.known ? '<span class="dsoak">' + (d.rec[0] === 'D' ? 'Commercial' : 'Wild') + '</span>' : '');
+    c.querySelector('.dn').textContent = title(d.name); c.querySelector('.dm').textContent = meta;
+    c.onclick = () => { $('detail').style.display = 'none'; goTo(d); };
+    grid.appendChild(c);
+    getMedia(d.i).then(m => {
+      if (!m.photo) { c.remove(); discAdd(); return; }
+      const img = c.querySelector('img'); img.alt = 'Photo of ' + title(d.name);
+      img.onload = () => c.classList.remove('ld'); img.onerror = () => { c.remove(); discAdd(); };
+      img.src = m.photo.src;
+    });
+  }
+  $('discbtn').onclick = openDiscover;
+
   function showDetail(d) {
     const det = $('detail'); det.style.display = 'block';
     const lat = Math.abs(d.lat).toFixed(3) + '°' + (d.lat >= 0 ? 'N' : 'S'), lon = Math.abs(d.lon).toFixed(3) + '°' + (d.lon < 0 ? 'W' : 'E');
