@@ -20,7 +20,8 @@
       "namespace": "android_app",
       "package_name": "io.github.thehotspringproject.app",
       "sha256_cert_fingerprints": [
-        "E4:65:6B:43:40:83:E4:44:44:9E:13:BF:C4:9B:26:CC:30:6B:A1:36:98:7E:8D:5C:75:9F:FE:1C:D3:79:21:3E"
+        "E4:65:6B:43:40:83:E4:44:44:9E:13:BF:C4:9B:26:CC:30:6B:A1:36:98:7E:8D:5C:75:9F:FE:1C:D3:79:21:3E",
+        "9F:2B:57:2D:E5:A8:2B:41:46:E0:22:F2:FC:F3:47:69:B5:56:5D:17:EB:56:72:23:B7:F9:CC:11:EC:8E:4A:1D"
       ]
     }
   }
