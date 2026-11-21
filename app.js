@@ -82,6 +82,7 @@
 
   // ---------- Map ----------
   const map = L.map('map', {preferCanvas:true, zoomSnap:0.5, worldCopyJump:true, minZoom:2, maxZoom:19});
+  if (/[?&]debug\b/.test(location.search)) window.__map = map;   // for automated checks
   map.fitBounds([[24.5,-125],[49.5,-66.5]]);
   window.wtMap = map;   // handy for debugging and for staging screenshots from the console
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
@@ -188,6 +189,9 @@
   const recReady = fetch('data/recreation.json?v=7').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
   // Worldwide springs (OpenStreetMap + Wikidata): preview only, with ?world in the address
   const WORLD = new URLSearchParams(location.search).has('world');
+  // Grouping crowded springs into numbered bubbles: preview only for now (?world or ?group)
+  const GROUP = (WORLD || new URLSearchParams(location.search).has('group')) && !new URLSearchParams(location.search).has('nogroup') && !!L.markerClusterGroup;
+  let cluster = null;
   const worldReady = WORLD ? fetch('data/springs-world.json?v=1').then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
   Promise.all([fetch('data/springs.json?v=8').then(r => r.json()), mediaReady, recReady, worldReady]).then(([j, , , w]) => init(j, w)).catch(err => {
     alertMsg('Could not load spring data (' + err + ').');
@@ -231,11 +235,13 @@
       if (d.known) {
         d.ic = L.marker([d.lat, d.lon], {icon:soakIcon(d, 5, '#000', 1), keyboard:false, interactive:false});
         d.hit = L.circleMarker([d.lat, d.lon], {renderer, radius:9, stroke:false, fillOpacity:0});
-        d.m = L.featureGroup([d.hit, d.ic]);
+        d.m = GROUP ? d.hit : L.featureGroup([d.hit, d.ic]);
       } else d.m = L.circleMarker([d.lat, d.lon], {renderer, radius:5, weight:1, color:'#000', opacity:.55, fillColor:colorOf(d), fillOpacity:.95});
       if (canHover) d.m.bindTooltip(() => esc(title(d.name)) + ' · ' + fmt(d), {direction:'top', offset:[0,-4]});
       d.m.on('click', () => select(d, false));
+      d.m._d = d;
     });
+    if (GROUP) setupCluster();
     // state dropdown
     const counts = {};
     S.forEach(d => counts[d.st] = (counts[d.st] || 0) + 1);
@@ -256,6 +262,42 @@
     if (world) { const o = document.createElement('option'); o.value = 'world'; o.textContent = 'Outside the US and Canada'; srcSel.insertBefore(o, srcSel.querySelector('option[value="ss"]')); }
     setUnit(unit); restyle(); update();
     openFromHash();
+  }
+
+  // ---------- Grouping (preview) ----------
+  // Bubbles show how many springs they hold, take the colour of the hottest one, and carry a small mark when
+  // they contain known soaking spots. Grouping stops at zoom 9, so single springs always show when zoomed in.
+  function setupCluster() {
+    cluster = L.markerClusterGroup({
+      maxClusterRadius: z => z < 6 ? 44 : 34, disableClusteringAtZoom: 9, showCoverageOnHover: false, spiderfyOnMaxZoom: false,
+      chunkedLoading: true, removeOutsideVisibleBounds: true, animate: true,
+      iconCreateFunction: c => {
+        const ds = c.getAllChildMarkers().map(m => m._d);
+        let hot = null, soak = '';
+        ds.forEach(d => { const f = estF(d); if (f != null && (!hot || f > estF(hot))) hot = d; if (d.known && soak !== 'D') soak = d.rec[0]; });
+        const n = ds.length, px = n < 10 ? 24 : n < 100 ? 28 : n < 1000 ? 34 : 40;
+        const fill = hot ? colorOf(hot) : 'var(--na)';
+        return L.divIcon({className: 'grp', iconSize: [px, px],
+          html: '<div class="grpb" style="background:' + fill + '"><span>' + (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : n) + '</span>' +
+            (soak ? '<i class="grps">' + soakSvg(soak, '#1f2a33', '#fff', 1.4) + '</i>' : '') + '</div>'});
+      }
+    });
+    cluster.on('clusterclick', e => e.layer.zoomToBounds({padding: [30, 30]}));
+    map.addLayer(cluster);
+    map.on('moveend zoomend', syncIcons); cluster.on('animationend', syncIcons);
+  }
+  // Soak symbols are separate from the clustered hit circles: show each only while its spring is not inside a bubble.
+  let syncT = null;
+  function syncIcons() {
+    clearTimeout(syncT);
+    syncT = setTimeout(() => {
+      const b = map.getBounds().pad(0.2);
+      S.forEach(d => {
+        if (!d.known) return;
+        const show = d.inC && b.contains([d.lat, d.lon]) && map.hasLayer(d.hit);   // unclustered springs are on the map; ones inside a bubble are not
+        if (show && !map.hasLayer(d.ic)) d.ic.addTo(map); else if (!show && map.hasLayer(d.ic)) map.removeLayer(d.ic);
+      });
+    }, 60);
   }
 
   // ---------- Marker size by zoom ----------
@@ -290,12 +332,14 @@
   function update() {
     // A name search looks through every spring, not just the ones in view, so a match anywhere can be found.
     const inView = q.value.trim() ? null : $('inView').checked && !document.querySelector('.app').classList.contains('max') ? map.getBounds() : (lastBounds && $('inView').checked ? lastBounds : null);
-    const visible = [];
+    const visible = [], toAdd = [], toDel = [];
     S.forEach(d => {
       const ok = passes(d);
-      if (ok) { if (!map.hasLayer(d.m)) d.m.addTo(map); } else if (map.hasLayer(d.m)) map.removeLayer(d.m);
+      if (cluster) { if (ok !== !!d.inC) { (ok ? toAdd : toDel).push(d.m); d.inC = ok; } }
+      else if (ok) { if (!map.hasLayer(d.m)) d.m.addTo(map); } else if (map.hasLayer(d.m)) map.removeLayer(d.m);
       if (ok && (!inView || inView.contains([d.lat, d.lon]))) visible.push(d);
     });
+    if (cluster && (toAdd.length || toDel.length)) { cluster.removeLayers(toDel); cluster.addLayers(toAdd); syncIcons(); }
     if (sel && map.hasLayer(sel.m) && sel.m.bringToFront) sel.m.bringToFront();
     const s = sortSel.value, tv = d => d.f == null ? ({B:200, V:175, H:140, W:100, C:60}[d.cls] ?? -1) : d.f;
     const clean = n => n.replace(/^\W+/, '');
