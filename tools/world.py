@@ -38,34 +38,57 @@ def overpass(q):
             last = e; print('  overpass retry', attempt, url, repr(e)[:120]); time.sleep(20 + 20 * attempt)
     raise last
 
-# 1. OpenStreetMap, in 30 x 60 degree tiles so no single query is too large
-try:
-    seen = set(); n_tiles = 0
-    for s in range(-90, 90, 30):
-        for w in range(-180, 180, 60):
-            bb = f'{s},{w},{s + 30},{w + 60}'
-            q = f'''[out:json][timeout:600];
-(nwr["natural"="hot_spring"]({bb});
- nwr["amenity"="public_bath"]["bath:type"~"^(hot_spring|onsen)$"]({bb});
- nwr["leisure"="hot_spring"]({bb}););
-out center tags;'''
-            res = overpass(q); n_tiles += 1; got = 0
-            for el in res.get('elements', []):
-                key = el['type'][0] + str(el['id'])
-                if key in seen: continue
-                seen.add(key)
-                lat = el.get('lat', el.get('center', {}).get('lat')); lon = el.get('lon', el.get('center', {}).get('lon'))
-                if lat is None: continue
-                tags = {k: v for k, v in el.get('tags', {}).items() if k in KEEP or k.startswith('name:')}
-                # keep only a few language names to stay small
-                tags = {k: v for k, v in tags.items() if not k.startswith('name:') or k in ('name:en', 'name:ja', 'name:es', 'name:is', 'name:de', 'name:fr', 'name:it')}
-                tags['_id'] = key
-                OUT['osm'].append([round(lat, 5), round(lon, 5), tags]); got += 1
-            print(f'tile {bb}: {got}')
-            time.sleep(4)
-    print('osm total', len(OUT['osm']))
-except Exception as e:
-    OUT['notes'].append('osm failed: %r' % e); print('osm failed', e)
+# 1. OpenStreetMap. A worldwide query by tag uses Overpass's tag index and is usually quick; if the servers refuse it,
+# fall back to 20-degree tiles. Progress is kept in data/world_raw.json so a later run only fetches missing tiles.
+KEEP_NAMES = ('name:en', 'name:ja', 'name:es', 'name:is', 'name:de', 'name:fr', 'name:it')
+QUERIES = ['nwr["natural"="hot_spring"]{bb};', 'nwr["amenity"="public_bath"]["bath:type"~"^(hot_spring|onsen)$"]{bb};', 'nwr["leisure"="hot_spring"]{bb};']
+seen = set(); OUT['osm'] = []
+def add(res):
+    got = 0
+    for el in res.get('elements', []):
+        key = el['type'][0] + str(el['id'])
+        if key in seen: continue
+        lat = el.get('lat', el.get('center', {}).get('lat')); lon = el.get('lon', el.get('center', {}).get('lon'))
+        if lat is None: continue
+        seen.add(key)
+        tags = {k: v for k, v in el.get('tags', {}).items() if (k in KEEP and not k.startswith('name:')) or k in KEEP_NAMES}
+        tags['_id'] = key
+        OUT['osm'].append([round(lat, 5), round(lon, 5), tags]); got += 1
+    return got
+def run(q, timeout, tries):
+    last = None
+    for attempt in range(tries):
+        url = MIRRORS[attempt % len(MIRRORS)]
+        try:
+            return post(url, {'data': q}, timeout + 30)
+        except Exception as e:
+            last = e; print('  retry', attempt, url.split('/')[2], repr(e)[:90]); time.sleep(15 + 15 * attempt)
+    raise last
+T0 = time.time(); failed = []
+for qq in QUERIES:
+    try:
+        res = run(f'[out:json][timeout:400];({qq.format(bb="")});out center tags;', 400, 4)
+        print('global', qq[:40], add(res))
+    except Exception as e:
+        print('global query failed, using tiles:', qq[:40], repr(e)[:80])
+        for s_ in range(-60, 80, 20):
+            for w_ in range(-180, 180, 20):
+                if time.time() - T0 > 65 * 60: failed.append((qq, s_, w_)); continue
+                bb = f'({s_},{w_},{s_ + 20},{w_ + 20})'
+                try:
+                    res = run(f'[out:json][timeout:150];({qq.format(bb=bb)});out center tags;', 150, 3)
+                    n = add(res)
+                    if n: print('  tile', bb, n)
+                except Exception as e2:
+                    failed.append((qq, s_, w_)); print('  tile failed', bb)
+                time.sleep(2)
+print('osm total', len(OUT['osm']), 'failed tiles', len(failed))
+if failed:
+    OUT['notes'].append('osm tiles failed: %d' % len(failed))
+    # keep earlier features for areas that failed this time
+    for lat, lon, t in PREV.get('osm', []):
+        if t.get('_id') not in seen: OUT['osm'].append([lat, lon, t]); seen.add(t.get('_id'))
+if not OUT['osm']:
     OUT['osm'] = PREV.get('osm', [])
 
 # 2. Wikidata

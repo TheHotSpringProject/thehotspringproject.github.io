@@ -27,7 +27,7 @@
     SDNR:'State land', SDOL:'State land', SLB:'State trust land', SPR:'State parks', SFW:'State fish & wildlife', OTHS:'State', CNTY:'County', CITY:'City', REG:'Regional district',
     TRIB:'Tribal', NGO:'Nonprofit', PVT:'Private', UNK:'Unknown'};
   const LANDCAT = {P:['Public land · open access','pub'], R:['Public land · restricted access','res'], U:['Public land · access unknown','res'], M:['Military · closed','no'], T:['Tribal land','no'], N:['Nonprofit preserve','no'], V:['Private','no']};
-  const landShort = d => d.ca ? 'Not mapped (Canada)' : !d.land ? 'Private or unmapped' : d.land[0] === 'P' ? 'Public' : d.land[0] === 'R' || d.land[0] === 'U' ? 'Public (limited)' : LANDCAT[d.land[0]][0];
+  const landShort = d => d.world ? 'Not mapped' : d.ca ? 'Not mapped (Canada)' : !d.land ? 'Private or unmapped' : d.land[0] === 'P' ? 'Public' : d.land[0] === 'R' || d.land[0] === 'U' ? 'Public (limited)' : LANDCAT[d.land[0]][0];
   const PIN = '<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
   const $ = id => document.getElementById(id);
   const CAM = '<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>';
@@ -186,7 +186,10 @@
   let MEDIA = {};
   const mediaReady = fetch('data/media.json?v=3').then(r => r.ok ? r.json() : {m:{}}).then(j => { MEDIA = j.m || {}; }).catch(() => {});
   const recReady = fetch('data/recreation.json?v=7').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
-  Promise.all([fetch('data/springs.json?v=8').then(r => r.json()), mediaReady, recReady]).then(([j]) => init(j)).catch(err => {
+  // Worldwide springs (OpenStreetMap + Wikidata): preview only, with ?world in the address
+  const WORLD = new URLSearchParams(location.search).has('world');
+  const worldReady = WORLD ? fetch('data/springs-world.json?v=1').then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
+  Promise.all([fetch('data/springs.json?v=8').then(r => r.json()), mediaReady, recReady, worldReady]).then(([j, , , w]) => init(j, w)).catch(err => {
     alertMsg('Could not load spring data (' + err + ').');
   });
 
@@ -203,12 +206,22 @@
     const px = Math.round(2 * r + 9);
     return L.divIcon({className:'soakic', html:soakSvg(d.rec[0], colorOf(d), stroke, sw), iconSize:[px, px], iconAnchor:[px / 2, px / 2]});
   }
-  function init(json) {
+  function init(json, world) {
     S = json.springs.map((r, i) => ({i, name:r[0] || 'Unnamed spring', unnamed:!r[0], st:r[1], lat:r[2], lon:r[3], f:r[4], c:r[5], cls:r[6], quad:(r[7] || '').replace(/^\(|\)$/g, ''), land:r[8] || null, ss:r[9] || null, moved:r[10] || null, added:r[11] === 'S' || r[11] === 'C', ca:r[11] === 'C', caSrc:r[12] || null}));
     SS_SRC = json.ss_sources || [];
+    if (world) {
+      Object.assign(NAMES, world.countries);
+      const n0 = S.length;
+      world.springs.forEach((r, k) => {
+        const i = n0 + k;
+        S.push({i, name:r[0] || 'Unnamed hot spring', unnamed:!r[0], st:r[1], lat:r[2], lon:r[3], f:r[4], c:r[5], cls:'', quad:'', land:null, ss:null, moved:null,
+          added:true, world:true, wrec:r[6] ? [r[6], r[7]] : null, region:r[8], wsrc:r[9], osm:r[12], qid:r[13], alt:r[14]});
+        if (r[10] || r[11]) MEDIA[i] = [r[10] || '', r[11] ? 'File:' + r[11] : ''];
+      });
+    }
     S.forEach(d => { if (d.f != null) d.cls = clsOf(d.f); });   // class follows the reading; springs listed only as boiling/hot/warm keep that label
-    S.forEach(d => { d.rec = REC[recKey(d)] || null; });
-    const sub = document.querySelector('header .sub'); if (sub) sub.textContent = S.length.toLocaleString() + ' springs across North America · data: NOAA Thermal Springs List (1980), state and territorial geological surveys, USGS and Natural Resources Canada';
+    S.forEach(d => { d.rec = d.world ? d.wrec : REC[recKey(d)] || null; });
+    const sub = document.querySelector('header .sub'); if (sub) sub.textContent = world ? S.length.toLocaleString() + ' springs worldwide (preview) · data: NOAA, state and territorial geological surveys, USGS, Natural Resources Canada, OpenStreetMap contributors and Wikidata' : S.length.toLocaleString() + ' springs across North America · data: NOAA Thermal Springs List (1980), state and territorial geological surveys, USGS and Natural Resources Canada';
     S.forEach(d => { d.noaaNoTemp = !d.added && !!d.ss && d.ss[4] === 1; });   // NOAA listed no reading, so the state survey's is shown
     // markers (hotter drawn on top)
     S.forEach(d => { d.known = !!(d.rec && (d.rec[0] === 'D' || d.rec[0] === 'W')); });
@@ -227,13 +240,15 @@
     const counts = {};
     S.forEach(d => counts[d.st] = (counts[d.st] || 0) + 1);
     const CAN = new Set(['BC', 'AB', 'YT', 'NT', 'NU']);
-    [['United States', k => !CAN.has(k)], ['Canada', k => CAN.has(k)]].forEach(([label, test]) => {
+    const W3 = new Set(world ? Object.keys(world.countries) : []);
+    [['United States', k => !CAN.has(k) && !W3.has(k)], ['Canada', k => CAN.has(k)], ['Other countries', k => W3.has(k)]].forEach(([label, test]) => {
       const g = document.createElement('optgroup'); g.label = label;
       Object.keys(counts).filter(test).sort((a, b) => NAMES[a].localeCompare(NAMES[b])).forEach(k => {
         const o = document.createElement('option'); o.value = k; o.textContent = NAMES[k] + ' (' + counts[k] + ')'; g.appendChild(o);
       });
-      $('state').appendChild(g);
+      if (g.children.length) $('state').appendChild(g);
     });
+    if (world) { const o = document.createElement('option'); o.value = 'world'; o.textContent = 'Outside the US and Canada'; srcSel.insertBefore(o, srcSel.querySelector('option[value="ss"]')); }
     setUnit(unit); restyle(); update();
     openFromHash();
   }
@@ -256,15 +271,16 @@
     const kf = soakSel.value;
     if (kf && !(kf === 'DW' ? (d.rec && (d.rec[0] === 'D' || d.rec[0] === 'W')) : d.rec && d.rec[0] === kf)) return false;
     const sf = srcSel.value;
-    if (sf && (sf === 'noaa' ? d.added : sf === 'added' ? !d.added : sf === 'ca' ? !d.ca : !(d.ss || d.added))) return false;
+    if (sf && (sf === 'noaa' ? d.added : sf === 'added' ? !d.added : sf === 'ca' ? !d.ca : sf === 'world' ? !d.world : !(d.ss || d.added))) return false;
     if (mf && !(mf === 'saved' ? saved.has(d.i) : mf === 'visited' ? visited.has(d.i) : !visited.has(d.i))) return false;
     if (lf) {
+      if (d.world || d.ca) return false;   // land status is only mapped in the US
       const c = d.land ? d.land[0] : '';
       // private = no PAD-US parcel (usually private), private ranches, or nonprofit preserves
       const ok = lf === 'open' ? c === 'P' : lf === 'limited' ? c === 'R' || c === 'U' : lf === 'public' ? 'PRU'.includes(c) && c !== '' : c === '' || c === 'V' || c === 'N';
       if (!ok) return false;
     }
-    return (!st || d.st === st) && (!term || d.name.toLowerCase().includes(term)) && (m <= 40 || (estF(d) == null ? m <= 80 : estF(d) >= m));   // springs with no temperature at all stay visible up to the 80°F default
+    return (!st || d.st === st) && (!term || d.name.toLowerCase().includes(term) || (d.alt && d.alt.toLowerCase().includes(term))) && (m <= 40 || (estF(d) == null ? m <= 80 : estF(d) >= m));   // springs with no temperature at all stay visible up to the 80°F default
   }
   function update() {
     const inView = $('inView').checked && !document.querySelector('.app').classList.contains('max') ? map.getBounds() : (lastBounds && $('inView').checked ? lastBounds : null);
@@ -322,12 +338,12 @@
   function popupHtml(d) {
     const row = (k, v) => '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
     const newer = d.ss && !d.added && !d.noaaNoTemp && d.ss[2] && d.ss[2] > 1980 ? row('Newer', (unit === 'F' ? d.ss[0] + '°F' : d.ss[1] + '°C') + ', ' + d.ss[2]) : '';
-    const land = d.ca ? '<span class="landtag no">Not mapped in Canada</span>' : d.land ? esc(d.land[2]) + '<br><span class="landtag ' + LANDCAT[d.land[0]][1] + '">' + LANDCAT[d.land[0]][0] + '</span>' : '<span class="landtag no">Private or unmapped</span>';
+    const land = d.world ? '' : d.ca ? '<span class="landtag no">Not mapped in Canada</span>' : d.land ? esc(d.land[2]) + '<br><span class="landtag ' + LANDCAT[d.land[0]][1] + '">' + LANDCAT[d.land[0]][0] + '</span>' : '<span class="landtag no">Private or unmapped</span>';
     return '<div class="pop pop2"><a class="pt" target="_blank" rel="noopener" title="Open in Google Maps" href="' + gmaps(d) + '">' + esc(title(d.name)) + '</a>' +
       (d.rec ? '<div><span class="soak soak-' + d.rec[0] + '">' + REC_LABEL[d.rec[0]] + '</span></div>' + (d.rec[1] && (d.rec[0] === 'D' || d.rec[0] === 'W') ? '<div class="srccite">' + esc(d.rec[1]) + '</div>' : '') : '') +
       '<table class="pt-t">' +
       row('Temp', '<span class="dot" style="background:' + colorOf(d) + '"></span><b>' + tempLong(d).replace(' (no reading listed)', '') + '</b>' + (d.cls ? ' · ' + LABEL[d.cls] : '')) + newer +
-      row(d.ca ? 'Province' : 'State', NAMES[d.st]) + row('Land', land) + '</table>' +
+      (d.world ? row('Country', esc(NAMES[d.st] || d.st) + (d.region ? ' · ' + esc(d.region) : '')) : row(d.ca ? 'Province' : 'State', NAMES[d.st]) + row('Land', land)) + '</table>' +
       '<div class="pbtns"><button class="pb sav' + (saved.has(d.i) ? ' on' : '') + '">' + (saved.has(d.i) ? '★ Saved' : '☆ Save') + '</button>' +
       '<button class="pb vis' + (visited.has(d.i) ? ' on' : '') + '">' + (visited.has(d.i) ? '✓ Visited' : 'Visited?') + '</button>' +
       '<a class="pb" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + 'Directions</a>' +
@@ -355,17 +371,20 @@
     const dist = distMi(d);
     det.innerHTML = '<button class="x" title="Close">✕</button><h2>' + esc(title(d.name)) + '</h2>' +
       '<div class="mybtns"><button class="mybtn sav' + (saved.has(d.i) ? ' on' : '') + '">' + (saved.has(d.i) ? '★ Saved' : '☆ Save') + '</button><button class="mybtn vis' + (visited.has(d.i) ? ' on' : '') + '">' + (visited.has(d.i) ? '✓ Visited' : 'Mark visited') + '</button></div><table>' +
-      '<tr><td>' + (d.ca ? 'Province or territory' : 'State') + '</td><td>' + NAMES[d.st] + '</td></tr>' +
-      '<tr><td>Temperature</td><td>' + tempLong(d) + (d.ca ? (d.ss ? ' <span class="srcnote">(' + esc((SS_SRC[d.ss[3]] || '').split(',')[0]) + ')</span>' : '') : d.ss && (d.added || d.noaaNoTemp) ? ' <span class="srcnote">(' + (d.ss[2] ? 'measured ' + d.ss[2] : 'date not recorded') + ')</span>' : d.f != null && !d.added ? ' <span class="srcnote">(NOAA 1980)</span>' : '') + '</td></tr>' +
+      (d.world ? '<tr><td>Country</td><td>' + esc(NAMES[d.st] || d.st) + '</td></tr>' + (d.region ? '<tr><td>Region</td><td>' + esc(d.region) + '</td></tr>' : '') + (d.alt ? '<tr><td>Local name</td><td>' + esc(d.alt) + '</td></tr>' : '')
+        : '<tr><td>' + (d.ca ? 'Province or territory' : 'State') + '</td><td>' + NAMES[d.st] + '</td></tr>') +
+      '<tr><td>Temperature</td><td>' + tempLong(d) + (d.world ? (d.f != null ? ' <span class="srcnote">(' + (d.wsrc.includes('O') ? 'OpenStreetMap' : 'Wikidata') + ')</span>' : '') : d.ca ? (d.ss ? ' <span class="srcnote">(' + esc((SS_SRC[d.ss[3]] || '').split(',')[0]) + ')</span>' : '') : d.ss && (d.added || d.noaaNoTemp) ? ' <span class="srcnote">(' + (d.ss[2] ? 'measured ' + d.ss[2] : 'date not recorded') + ')</span>' : d.f != null && !d.added ? ' <span class="srcnote">(NOAA 1980)</span>' : '') + '</td></tr>' +
       (d.ss && !d.added && !d.noaaNoTemp ? '<tr><td>' + (d.ss[2] && d.ss[2] > 1980 ? 'Newer reading' : 'Other reading') + '</td><td>' + (unit === 'F' ? d.ss[0] + '°F' : d.ss[1] + '°C') + (d.ss[2] ? ', measured ' + d.ss[2] : ', date not recorded') + '</td></tr>' : '') +
       '<tr><td>Class</td><td><span class="dot" style="background:' + colorOf(d) + ';vertical-align:-1px"></span> ' + LABEL[d.cls] + '</td></tr>' +
       '<tr><td>Latitude, longitude</td><td>' + lat + ', ' + lon + '</td></tr>' +
-      '<tr><td>Land</td><td>' + (d.ca ? '<span class="landtag no" style="margin-left:0">Not mapped in Canada</span>' : d.land ? esc(d.land[2]) + (MGR[d.land[1]] && !d.land[2].includes(MGR[d.land[1]]) ? ' <span style="color:var(--muted)">(' + MGR[d.land[1]] + ')</span>' : '') + '<br><span class="landtag ' + LANDCAT[d.land[0]][1] + '" style="margin-left:0">' + LANDCAT[d.land[0]][0] + '</span>' : '<span class="landtag no" style="margin-left:0">Private or unmapped</span>') + '</td></tr>' +
+      (d.world ? '' : '<tr><td>Land</td><td>' + (d.ca ? '<span class="landtag no" style="margin-left:0">Not mapped in Canada</span>' : d.land ? esc(d.land[2]) + (MGR[d.land[1]] && !d.land[2].includes(MGR[d.land[1]]) ? ' <span style="color:var(--muted)">(' + MGR[d.land[1]] + ')</span>' : '') + '<br><span class="landtag ' + LANDCAT[d.land[0]][1] + '" style="margin-left:0">' + LANDCAT[d.land[0]][0] + '</span>' : '<span class="landtag no" style="margin-left:0">Private or unmapped</span>') + '</td></tr>') +
       (d.moved ? '<tr><td>Location</td><td>From state survey records; NOAA\'s 1980 point is ' + fmtDist(kmBetween(d.lat, d.lon, d.moved[0], d.moved[1])) + ' away</td></tr>' : '') +
       (d.quad ? '<tr><td>USGS quadrangle</td><td>' + esc(d.quad) + '</td></tr>' : '') +
       (d.rec ? '<tr><td>Soaking <span class="srcnote">(estimate)</span></td><td><span class="soak soak-' + d.rec[0] + '">' + REC_LABEL[d.rec[0]] + '</span>' + (d.rec[1] ? '<div class="srccite">' + esc(d.rec[1]) + '</div>' : '') + '</td></tr>' : '') +
       (d.ca ? '<tr><td>Listed in</td><td>Canadian sources<div class="srccite">' + (d.caSrc || []).map(k => esc(SS_SRC[k] || '')).join('<br>') + '</div></td></tr>' : '') +
-      (d.ca ? '' : '<tr><td>Listed in</td><td>' + (d.added ? 'Added from other data sources (not in NOAA\'s 1980 list)' : 'NOAA Thermal Springs List (1980)') +
+      (d.world ? '<tr><td>Listed in</td><td>' + [d.osm ? '<a href="https://www.openstreetmap.org/' + ({n:'node', w:'way', r:'relation'})[d.osm[0]] + '/' + d.osm.slice(1) + '" target="_blank" rel="noopener">OpenStreetMap</a>' : '', d.qid ? '<a href="https://www.wikidata.org/wiki/' + esc(d.qid) + '" target="_blank" rel="noopener">Wikidata</a>' : ''].filter(Boolean).join(' · ') +
+        '<div class="srccite">' + (d.osm ? '© OpenStreetMap contributors (ODbL)' : '') + (d.osm && d.qid ? ' · ' : '') + (d.qid ? 'Wikidata (CC0)' : '') + '. Not checked against official surveys.</div></td></tr>' : '') +
+      (d.ca || d.world ? '' : '<tr><td>Listed in</td><td>' + (d.added ? 'Added from other data sources (not in NOAA\'s 1980 list)' : 'NOAA Thermal Springs List (1980)') +
         (d.ss || d.moved ? '<div class="srccite">' + (d.ss ? 'Reading: ' + esc(SS_SRC[d.ss[3]] || '') : '') + (d.moved && (!d.ss || d.moved[2] !== d.ss[3]) ? (d.ss ? '<br>' : '') + 'Location: ' + esc(SS_SRC[d.moved[2]] || '') : '') + (/^(Water Quality Portal|Nevada Bureau|New Mexico Bureau)/.test(SS_SRC[(d.ss || d.moved)[d.ss ? 3 : 2]] || '') ? '' : ' · via the <a href="https://doi.org/10.5281/zenodo.8125526" target="_blank" rel="noopener">National Geothermal Data System</a> (CC BY 4.0)') + '</div>' : '') + '</td></tr>') +
       (dist != null ? '<tr><td>Distance from you</td><td>' + Math.round(dist).toLocaleString() + ' mi (straight line)</td></tr>' : '') +
       '</table><div class="gphoto" id="gphoto" hidden></div>' + (MEDIA[d.i] ? '<div class="about" id="about"><div class="ab-load">Loading description…</div></div>' : '') + '<a class="gbtn" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + ' Open in Google Maps</a>';
