@@ -18,7 +18,7 @@
 <meta name="theme-color" content="#f2f0e4">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="vendor/markercluster/MarkerCluster.css">
-<link rel="stylesheet" href="style.css?v=36">
+<link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
 <header>
@@ -32,9 +32,11 @@
     <div class="offline" id="offline" hidden role="status" aria-live="polite"><svg class="oi" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M8.5 8.6A5 5 0 0 0 6 18h11m3.3-1.9A4 4 0 0 0 17 9.1a6 6 0 0 0-6.6-4"/></svg><div class="ot"><b id="offttl">You're offline</b><span id="offmsg"></span></div><button type="button" class="ob" id="offgo">Saved areas</button><button type="button" class="ox" id="offx" title="Hide" aria-label="Hide offline notice">✕</button></div>
     <div class="offpanel" id="offpanel" hidden role="dialog" aria-label="Save this area for offline"></div>
     <div class="bm" id="bm">
-      <button id="bmbtn" aria-expanded="false" aria-haspopup="true" aria-label="Map style: dark or light"></button>
-      <div class="menu" role="menu" aria-label="Map style">
-        <div class="grid" id="bmgrid"></div>
+      <div class="bmrow">
+        <button id="bmbtn" aria-expanded="false" aria-haspopup="true" aria-label="Map style"></button>
+        <div class="grid" id="bmgrid" role="menu" aria-label="Map style"></div>
+      </div>
+      <div class="menu" id="bmareas" hidden>
         <div class="hdr" id="offhdr">Offline areas</div>
         <div id="offareas"></div>
       </div>
@@ -102,7 +104,7 @@
   <p>This map was inspired by NOAA's former hot springs viewer, which the National Geophysical Data Center ran until it was retired in 2025. It shows all 1,661 thermal springs in the <i>Thermal Springs List for the United States</i>, compiled by Berry, Grim and Ikelman for NOAA in 1980, plus thousands more springs, hot to cool, from state geological surveys and the Water Quality Portal, and about 90 Canadian springs from the Yukon Geological Survey, Natural Resources Canada's place names and OpenStreetMap, with newer temperature readings and more precise locations where those sources have them. A separate <b>Named springs</b> layer (in the legend) adds about 33,000 springs from USGS place names. Use it to find a warm soak near your next trip, see which springs sit on public land, and jump straight to directions.</p>
   <h3>What you can do</h3>
   <ul>
-    <li>Switch between a dark map with roads and place names and a light USGS topo map.</li>
+    <li>Switch between a dark map, a light USGS topo map and satellite imagery.</li>
     <li>Filter by name, state, minimum temperature and land ownership, or sort by distance from you.</li>
     <li>Tap a spring for its temperature, location, land manager, photos and a description, with a one-tap link to Google Maps.</li>
   </ul>
@@ -119,7 +121,7 @@
     <li><b>Named springs layer:</b> U.S. Geological Survey, <a href="https://www.usgs.gov/us-board-on-geographic-names/download-gnis-data" target="_blank" rel="noopener">Geographic Names Information System</a> (feature class Spring).</li>
     <li><b>Land ownership:</b> USGS <a href="https://www.usgs.gov/data/protected-areas-database-united-states-pad-us-4" target="_blank" rel="noopener">Protected Areas Database (PAD-US 4)</a>.</li>
     <li><b>Descriptions &amp; photos:</b> Wikipedia, Wikimedia Commons and Google Maps contributors, credited on each spring.</li>
-    <li><b>Maps:</b> Dark map and labels by Esri; light map from USGS The National Map.</li>
+    <li><b>Maps:</b> Dark map, satellite imagery and labels by Esri (imagery: Maxar, Earthstar Geographics); light map from USGS The National Map.</li>
   </ul>
   <h3>Get the app</h3>
   <p id="installHelp">Install this map on your phone for a home-screen icon, full-screen view and offline use. <b>iPhone/iPad:</b> open the site in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. <b>Android/Chrome:</b> tap <b>Install app</b> below or in the browser menu.</p>
@@ -131,6 +133,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/markercluster/leaflet.markercluster.js"></script>
 <script src="config.js?v=14"></script>
-<script src="app.js?v=68"></script>
+<script src="app.js?v=69"></script>
 </body>
 </html>

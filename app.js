@@ -63,16 +63,18 @@
   // ---------- Basemaps ----------
   const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
   const USGS = 'https://basemap.nationalmap.gov/arcgis/rest/services/';
-  const MOON = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
-  const SUN = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g></svg>';
+  const MOON = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
+  const SUN = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g></svg>';
+  const SAT = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor" transform="rotate(45 13 11)"><rect x="9.4" y="8.6" width="5.2" height="6.8" rx="1"/><rect x="1.6" y="9.6" width="6.6" height="4.8" rx=".7"/><rect x="15.8" y="9.6" width="6.6" height="4.8" rx=".7"/><rect x="8.2" y="11.4" width="1.4" height="1.2"/><rect x="14.4" y="11.4" width="1.4" height="1.2"/></g><path d="M3.6 14.6a5.6 5.6 0 0 0 5.8 5.8M3.4 18.4a2.2 2.2 0 0 0 2.2 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
   const ESRI_ATTR = 'Tiles &copy; Esri and contributors';
   const USGS_ATTR = 'Tiles: <a href="https://www.usgs.gov/programs/national-geospatial-program/national-map" target="_blank" rel="noopener">USGS The National Map</a>';
   const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
-  // Two maps: Dark (Esri dark gray, always with roads and place names) and Light (USGS The National Map topo).
-  // Light keeps the id 'usgstopo' because offline areas are saved from it.
+  // Three maps, picked with icons: Dark (Esri dark gray) and Satellite (Esri imagery), both with roads and place
+  // names, and Light (USGS The National Map topo). Light keeps the id 'usgstopo' because offline areas are saved from it.
   const BASEMAPS = [
-    {id:'dark', name:'Dark', url:ESRI+'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', opt:{maxNativeZoom:16, attribution:ESRI_ATTR + ' (Dark Gray Canvas)'}, dark:true},
-    {id:'usgstopo', name:'Light', url:USGS+'USGSTopo/MapServer/tile/{z}/{y}/{x}', opt:{maxNativeZoom:16, attribution:USGS_ATTR}}
+    {id:'dark', name:'Dark', icon:MOON, url:ESRI+'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', opt:{maxNativeZoom:16, attribution:ESRI_ATTR + ' (Dark Gray Canvas)'}, dark:true, labels:true},
+    {id:'usgstopo', name:'Light', icon:SUN, url:USGS+'USGSTopo/MapServer/tile/{z}/{y}/{x}', opt:{maxNativeZoom:16, attribution:USGS_ATTR}},
+    {id:'imagery', name:'Satellite', icon:SAT, url:ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}', opt:{maxNativeZoom:19, attribution:ESRI_ATTR + ' (Maxar, Earthstar Geographics)'}, imagery:true, labels:true}
   ];
 
   // ---------- Map ----------
@@ -88,11 +90,11 @@
     L.tileLayer(ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {maxNativeZoom:19, maxZoom:19, crossOrigin:'anonymous'}),
     L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {maxNativeZoom:19, maxZoom:19, crossOrigin:'anonymous', attribution:ESRI_ATTR})
   ]);
-  const grid = $('bmgrid');
+  const grid = $('bmgrid'), bmEl = $('bm');
   BASEMAPS.forEach(b => {
     const s = document.createElement('button');
     s.className = 'sw'; s.dataset.id = b.id; s.type = 'button'; s.setAttribute('role', 'menuitemradio');
-    s.innerHTML = (b.dark ? MOON : SUN) + esc(b.name);
+    s.innerHTML = b.icon; s.title = b.name; s.setAttribute('aria-label', b.name + ' map');
     s.onclick = () => { setBM(b.id); bmEl.classList.remove('open'); $('bmbtn').setAttribute('aria-expanded', 'false'); };
     grid.appendChild(s);
   });
@@ -103,17 +105,17 @@
     baseLayer.bringToBack();
     curBM = b;
     grid.querySelectorAll('.sw').forEach(s => { s.classList.toggle('on', s.dataset.id === b.id); s.setAttribute('aria-checked', s.dataset.id === b.id); });
-    if (b.dark) labels.addTo(map); else map.removeLayer(labels);   // roads and place names always go with Dark
-    $('bmbtn').innerHTML = b.dark ? MOON : SUN;
-    $('bmbtn').title = 'Map: ' + b.name;
+    if (b.labels) labels.addTo(map); else map.removeLayer(labels);   // roads and place names go with Dark and Satellite
+    $('bmbtn').innerHTML = b.icon;
+    $('bmbtn').title = 'Map: ' + b.name + ' (tap to change)';
+    bmEl.dataset.cur = b.id;
     if (!keep) store.set('wt-bm2', b.id);
   }
-  const bmEl = $('bm');
   $('bmbtn').onclick = e => { e.stopPropagation(); bmEl.classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', bmEl.classList.contains('open')); };
   document.addEventListener('click', e => { if (!bmEl.contains(e.target)) bmEl.classList.remove('open'); });
   L.DomEvent.disableClickPropagation(bmEl); L.DomEvent.disableScrollPropagation(bmEl);
   L.DomEvent.disableClickPropagation($('legend'));
-  setBM(store.get('wt-bm2', 'dark') === 'dark' ? 'dark' : 'usgstopo');   // older choices (satellite, OSM...) become Light
+  { const v = store.get('wt-bm2', 'dark'); setBM(v === 'dark' || v === 'imagery' ? v : 'usgstopo'); }   // older choices (OSM, relief...) become Light
 
   // ---------- Locate control ----------
   let me = null, meMarker = null;
@@ -815,7 +817,8 @@
   function renderAreas() {
     const box = $('offareas'), all = areasGet();
     $('offhdr').hidden = box.hidden = !offOk;
-    if (!all.length) { box.innerHTML = ''; $('offhdr').hidden = box.hidden = true; return; }
+    $('bmareas').hidden = !all.length || !offOk;
+    if (!all.length) { box.innerHTML = ''; return; }
     box.innerHTML = '';
     all.forEach(a => {
       const row = document.createElement('div'); row.className = 'oa';

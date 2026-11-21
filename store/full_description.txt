@@ -17,7 +17,7 @@ SORT AND FILTER EVERY SPRING
 • Expand the results into a full table
 
 MAPS FOR EVERY TRIP
-• Dark map with roads and place names, or the light USGS topo map
+• Dark map, light USGS topo map, or satellite imagery, with roads and place names on the dark and satellite maps
 • Save map areas to use offline where there's no signal
 • Turn on about 33,000 more named springs from USGS place names
 • Save springs and mark the ones you've visited
@@ -48,6 +48,6 @@ https://natural-resources.canada.ca/maps-tools-publications/maps/geographical-na
 • Other state survey records: state geological surveys via the National Geothermal Data System (AASG-GDS)
 https://doi.org/10.5281/zenodo.8125526
 
-Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Dark map and labels: Esri.
+Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Dark map, satellite imagery and labels: Esri (imagery: Maxar, Earthstar Geographics).
 
 No ads. No account. The app collects no personal data.
