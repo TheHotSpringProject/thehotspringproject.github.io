@@ -1,4 +1,4 @@
-/* The Hot Springs Project
+/* The Hot Spring Project
    Data: NOAA Thermal Springs List for the United States (KGRD No. 12, 1980). */
 (function () {
   'use strict';

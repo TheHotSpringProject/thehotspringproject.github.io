@@ -1,4 +1,4 @@
-# The Hot Springs Project
+# The Hot Spring Project
 
 A map of hot springs across North America (the United States and Canada).
 

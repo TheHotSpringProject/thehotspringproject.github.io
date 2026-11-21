@@ -1,6 +1,6 @@
-Not a government app: The Hot Springs Project is an independent app. It is not affiliated with, endorsed by, or acting for NOAA, the U.S. Geological Survey (USGS), the EPA, the National Park Service, Natural Resources Canada, Parks Canada, or any federal, state, provincial, territorial, or tribal agency. It uses publicly released government data; the official sources are linked at the end of this description and on the app's About page.
+Not a government app: The Hot Spring Project is an independent app. It is not affiliated with, endorsed by, or acting for NOAA, the U.S. Geological Survey (USGS), the EPA, the National Park Service, Natural Resources Canada, Parks Canada, or any federal, state, provincial, territorial, or tribal agency. It uses publicly released government data; the official sources are linked at the end of this description and on the app's About page.
 
-Find a hot spring for your next soak, road trip, or geology outing. The Hot Springs Project maps about 6,000 thermal springs across North America, from Alaska and the Yukon to New Mexico, each colored by water temperature on a smooth scale from cool blue to near-boiling red.
+Find a hot spring for your next soak, road trip, or geology outing. The Hot Spring Project maps about 6,000 thermal springs across North America, from Alaska and the Yukon to New Mexico, each colored by water temperature on a smooth scale from cool blue to near-boiling red.
 
 FIND A PLACE TO SOAK
 • Known soaking spots stand out: a house icon for commercial ones (resorts, pools, bathhouses) and a hot-spring icon for wild ones
