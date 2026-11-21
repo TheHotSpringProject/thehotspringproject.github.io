@@ -48,6 +48,6 @@ https://natural-resources.canada.ca/maps-tools-publications/maps/geographical-na
 • Other state survey records: state geological surveys via the National Geothermal Data System (AASG-GDS)
 https://doi.org/10.5281/zenodo.8125526
 
-Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Dark map and labels: Esri contributors.
+Descriptions and photos come from Wikipedia, Wikimedia Commons, and Google Maps contributors and are credited in the app. Dark map and labels: Esri.
 
 No ads. No account. The app collects no personal data.
