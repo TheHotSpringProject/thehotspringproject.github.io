@@ -181,7 +181,7 @@
   // without a curated photo.
   const mediaReady = Promise.all([
     fetch('data/media.json?v=3').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
-    fetch('data/photos.json?v=1').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}}))
+    fetch('data/photos.json?v=2').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}}))
   ]).then(([j, ph]) => {
     MEDIA = j.m || {};
     Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
