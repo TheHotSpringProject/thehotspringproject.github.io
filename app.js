@@ -422,8 +422,14 @@
   // ---------- Discover: photo cards of springs near you, or a random set ----------
   // Only springs with a freely licensed Wikimedia Commons photo are shown; a card whose photo fails to load is
   // replaced by the next spring in line.
-  let discList = [], discShown = 0;
+  let discList = [], discShown = 0, discBack = null;
+  function backToDiscover() {
+    const det = $('detail'), b = discBack; discBack = null;
+    det.innerHTML = ''; det.appendChild(b.keep); det.style.display = 'block';
+    requestAnimationFrame(() => { det.scrollTop = b.scroll; });
+  }
   function openDiscover() {
+    discBack = null;
     const det = $('detail'); det.style.display = 'block';
     det.innerHTML = '<div class="dhead"><h2>Discover springs</h2><button class="x" title="Close">✕</button></div>' +
       '<div class="dbody"><div class="dsub" id="dsub">Finding springs near you…</div><div class="dgrid" id="dgrid"></div>' +
@@ -457,7 +463,12 @@
     const meta = [NAMES[d.st] || d.st, dist != null ? Math.round(dist).toLocaleString() + ' mi' : '', d.f != null ? (unit === 'F' ? d.f + '°F' : d.c + '°C') : ''].filter(Boolean).join(' · ');
     c.innerHTML = '<span class="dimg"><img alt=""></span><span class="dn"></span><span class="dm"></span>' + (d.known ? '<span class="dsoak">' + (d.rec[0] === 'D' ? 'Commercial' : 'Wild') + '</span>' : '');
     c.querySelector('.dn').textContent = title(d.name); c.querySelector('.dm').textContent = meta;
-    c.onclick = () => { goTo(d); showDetail(d); };   // fly there and open the full details (the "More" view)
+    c.onclick = () => {   // fly there and open the full details (the "More" view); closing them comes back here
+      const det = $('detail'), keep = document.createDocumentFragment(), scroll = det.scrollTop;
+      while (det.firstChild) keep.appendChild(det.firstChild);
+      discBack = {keep, scroll};
+      goTo(d); showDetail(d);
+    };
     grid.appendChild(c);
     getMedia(d.i).then(m => {
       if (!m.photo) { c.remove(); discAdd(); return; }
@@ -500,9 +511,12 @@
     det.querySelector('.mybtn.vis').onclick = () => toggleMine(d, 'vis');
     if (MEDIA[d.i]) loadAbout(d);
     loadGooglePhoto(d);
-    det.querySelector('.x').onclick = () => { det.style.display = 'none'; if (!map._popup || !map.hasLayer(map._popup)) deselect(); };
+    det.querySelector('.x').onclick = () => {
+      if (discBack) { backToDiscover(); return; }   // opened from Discover: go back to the cards, where you were
+      det.style.display = 'none'; if (!map._popup || !map.hasLayer(map._popup)) deselect();
+    };
   }
-  function deselect() { sel = null; $('detail').style.display = 'none'; restyle(); list.querySelectorAll('.it.sel').forEach(e => e.classList.remove('sel')); setHash(''); }
+  function deselect() { sel = null; discBack = null; $('detail').style.display = 'none'; restyle(); list.querySelectorAll('.it.sel').forEach(e => e.classList.remove('sel')); setHash(''); }
   function openPop(d, fly) {
     // On wider screens the panel floats over the left of the map: keep the spring and its popup clear of it.
     const panelW = () => { const a = document.querySelector('aside'); return (window.innerWidth > 760 && !app.classList.contains('max') && a) ? a.getBoundingClientRect().right - $('mapwrap').getBoundingClientRect().left : 0; };
