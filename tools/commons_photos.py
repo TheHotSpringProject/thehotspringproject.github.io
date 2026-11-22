@@ -44,18 +44,16 @@ def km(a, b, c, d):
     h = math.sin(x / 2) ** 2 + math.cos(a * t) * math.cos(c * t) * math.sin(y / 2) ** 2
     return 12742 * math.asin(math.sqrt(h))
 
-GENERIC = {'hot', 'warm', 'springs', 'spring', 'the', 'and', 'of', 'creek', 'river', 'lake', 'upper', 'lower', 'north', 'south',
-           'east', 'west', 'big', 'little', 'old', 'new', 'mineral', 'sulphur', 'sulfur', 'thermal', 'group', 'well', 'wells', 'resort',
-           'unnamed', 'near', 'basin', 'canyon', 'valley', 'mountain', 'mount', 'park', 'ranch', 'camp'}
-SPRINGY = re.compile(r'hot.?spring|warm.?spring|thermal|geyser|terrace|travertine|sinter|fumarole|steam|soak|hot.?pool|plunge|bath|'
-                     r'\bspa\b|onsen|hot.?pot|spring|pool|mud.?pot|boiling|mineral', re.I)
-BAD = re.compile(r'\bmap\b|locator|logo|diagram|chart|graph|\bsign\b|signage|plaque|portrait|selfie|\bseal\b|coat of arms|flag of|'
-                 r'screenshot|aerial view of the town|\bbus\b|train|locomotive|\bcar\b|truck|license plate|menu|receipt|ticket', re.I)
+STATES={'alabama','alaska','arizona','arkansas','california','colorado','connecticut','delaware','florida','georgia','hawaii','idaho','illinois','indiana','iowa','kansas','kentucky','louisiana','maine','maryland','massachusetts','michigan','minnesota','mississippi','missouri','montana','nebraska','nevada','hampshire','jersey','mexico','york','carolina','dakota','ohio','oklahoma','oregon','pennsylvania','rhode','tennessee','texas','utah','vermont','virginia','washington','wisconsin','wyoming','columbia','alberta','yukon','puerto','rico'}
+GENERIC={'hot','warm','springs','spring','the','and','creek','river','lake','upper','lower','north','south','east','west','big','little','old','new','mineral','sulphur','sulfur','thermal','group','well','wells','resort','unnamed','near','basin','canyon','valley','mountain','mount','park','ranch','camp','bear','city','county','fork','road','station','area','state','national','forest','main','blue','green','white','black','salt','soda','iron','cold','dead','santa','san','fort'}
+STRICT=re.compile(r'hot.?springs?|warm.?springs?|thermal|geyser|terrace|travertine|sinter|fumarole|fumerole|mud.?pot|mud.?volcano|soak|hot.?pot|hot.?pool|boiling|paint.?pot|caldron|cauldron|hot water',re.I)
+SPRINGY=re.compile(r'springs?\b|pool|geyser|bath|spa\b|soak|plunge|punch.?bowl|blue hole|\bvent\b|boil',re.I)
+BAD=re.compile(r'building|avenue|barn|shed\b|cat house|\bmill\b|banner|balloon|i-70|amtrak|trolley|guard house|farm\b|residence|evans hotel|majestic hotel|, (ca|co|ar|nv|ut|or|id|mt|wy|nm|az|tx),? \d{4}|school|church|cemetery|monument|marker|courthouse|post office|depot|highway|route|\broad\b|\bst\b|street|dam\b|bridge|downtown|main street|sign|museum|library|store|motel|gas station|insects?|elk|deer|cows?|horse|aerial|airport|train|truck|\bcar\b',re.I)
 FREE = re.compile(r'cc[- ]?by|cc0|public domain|\bpd\b|pd-|attribution', re.I)
 NOTFREE = re.compile(r'\bnc\b|non[- ]?commercial|\bnd\b|no[- ]?deriv|fair use|non-free', re.I)
 
 def tokens(name):
-    return [w for w in re.findall(r"[a-z]+", name.lower()) if len(w) > 2 and w not in GENERIC]
+    return [w for w in re.findall(r"[a-z]+", name.lower()) if len(w) >= 4 and w not in GENERIC and w not in STATES]
 
 todo = [(i, r) for i, r in enumerate(springs)
         if r[0] and str(i) not in media and str(i) not in OUT['p'] and i not in checked]
@@ -72,8 +70,8 @@ for n, (i, r) in enumerate(todo):
         dist = {h['title']: h.get('dist', 0) for h in hits}
         info = {}
         for k in range(0, len(titles), 50):
-            j = api({'action': 'query', 'titles': '|'.join(titles[k:k + 50]), 'prop': 'imageinfo|categories', 'iiprop': 'size|mime|extmetadata',
-                     'iiextmetadatafilter': 'LicenseShortName|ImageDescription', 'cllimit': 'max', 'clshow': '!hidden'})
+            j = api({'action': 'query', 'titles': '|'.join(titles[k:k + 50]), 'prop': 'imageinfo', 'iiprop': 'size|mime|extmetadata',
+                     'iiextmetadatafilter': 'LicenseShortName|ImageDescription'})
             for p in (j.get('query') or {}).get('pages', []):
                 info[p['title']] = p
         tk = tokens(name); best = None
@@ -82,14 +80,13 @@ for n, (i, r) in enumerate(todo):
             if not ii or ii.get('width', 0) < 800 or ii.get('mime') not in ('image/jpeg', 'image/png'): continue
             md = ii.get('extmetadata', {}); lic = (md.get('LicenseShortName') or {}).get('value', '')
             if not FREE.search(lic) or NOTFREE.search(lic): continue
-            cats = ' '.join(c['title'] for c in p.get('categories', []))
-            desc = re.sub('<[^>]+>', ' ', (md.get('ImageDescription') or {}).get('value', ''))[:400]
-            text = t + ' ' + cats + ' ' + desc
-            if BAD.search(t + ' ' + cats): continue
-            nm = sum(1 for w in tk if re.search(r'\b' + re.escape(w) + r'\b', text, re.I))
-            sp = bool(SPRINGY.search(text))
-            if not (nm or sp): continue
-            score = (min(nm, 2) * 2 + (1 if sp else 0), -dist.get(t, 999))
+            # match on the file name only: categories and descriptions name the nearby town too often
+            fn = t[5:].rsplit('.', 1)[0]
+            if BAD.search(fn): continue
+            nm = sum(1 for w in tk if re.search(r'\b' + re.escape(w), fn, re.I))
+            strict = bool(STRICT.search(fn))
+            if not (strict or (nm and SPRINGY.search(fn))): continue
+            score = (min(nm, 2) * 2 + (1 if strict else 0), -dist.get(t, 999))
             if not best or score > best[0]: best = (score, t)
         if best:
             OUT['p'][str(i)] = best[1]; found += 1

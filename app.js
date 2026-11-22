@@ -177,7 +177,15 @@
 
   // Wikipedia article / Commons photo matched to each spring (data/media.json); text and credits load live
   let MEDIA = {};
-  const mediaReady = fetch('data/media.json?v=3').then(r => r.ok ? r.json() : {m:{}}).then(j => { MEDIA = j.m || {}; }).catch(() => {});
+  // Curated Wikipedia/Commons links, plus Commons photos geotagged at each spring (data/photos.json) for springs
+  // without a curated photo.
+  const mediaReady = Promise.all([
+    fetch('data/media.json?v=3').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
+    fetch('data/photos.json?v=1').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}}))
+  ]).then(([j, ph]) => {
+    MEDIA = j.m || {};
+    Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
+  });
   const recReady = fetch('data/recreation.json?v=7').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
   // Worldwide springs (OpenStreetMap + Wikidata): preview only, with ?world in the address
   const WORLD = new URLSearchParams(location.search).has('world');
@@ -431,9 +439,11 @@
   }
   function discStart(near) {
     const grid = $('dgrid'); if (!grid) return;
-    discList = S.filter(d => MEDIA[d.i] && MEDIA[d.i][1]);
+    const seenF = new Set();   // one card per photo, and only named springs
+    discList = S.filter(d => MEDIA[d.i] && MEDIA[d.i][1] && !d.unnamed && !/^unnamed/i.test(d.name));
     if (near) discList.sort((a, b) => distMi(a) - distMi(b));
     else discList = discList.map(d => [Math.random() + (d.known ? 0.35 : 0), d]).sort((a, b) => b[0] - a[0]).map(x => x[1]);   // known soaks come up more often
+    discList = discList.filter(d => !seenF.has(MEDIA[d.i][1]) && seenF.add(MEDIA[d.i][1]));
     discShown = 0; grid.innerHTML = '';
     $('dsub').textContent = near ? 'The nearest springs with photos' : 'A random selection. Allow location to see springs near you.';
     $('dshuf').hidden = near;
