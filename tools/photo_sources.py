@@ -26,10 +26,11 @@ STATE = {'AK':'Alaska','AL':'Alabama','AR':'Arkansas','AZ':'Arizona','CA':'Calif
 GENERIC = {'hot','warm','springs','spring','the','and','creek','river','lake','upper','lower','north','south','east','west','big','little','old',
  'new','mineral','sulphur','sulfur','thermal','group','well','wells','resort','unnamed','near','basin','canyon','valley','mountain','mount','park',
  'ranch','camp','city','county','fork','road','station','area','state','national','forest','main','blue','green','white','black','salt','soda',
- 'iron','cold','dead','santa','san','fort','big','boiling','lithia','magnesia','seep','seeps','pool','pools','bath','baths'}
+ 'iron','cold','dead','santa','san','fort','big','boiling','lithia','magnesia','seep','seeps','pool','pools','bath','baths',
+ 'fumarole','fumaroles','mudpot','mudpots','geyser','geysers','vent','vents','sink','gas','coastal','sampling','drinking','tunnel'}
 FREE = re.compile(r'cc[- ]?by|cc0|public domain|\bpd\b|pd-|attribution', re.I)
 NOTFREE = re.compile(r'\bnc\b|non[- ]?commercial|\bnd\b|no[- ]?deriv|fair use|non-free', re.I)
-BAD = re.compile(r'\bmap\b|locator|logo|diagram|chart|\bsign\b|signage|plaque|portrait|\bseal\b|coat of arms|flag of|screenshot|postcard back|'
+BAD = re.compile(r'routes?\b|newspaper|register|herald|\(page \d|advert|trail \(|atv|\bmap\b|locator|logo|diagram|chart|\bsign\b|signage|plaque|portrait|\bseal\b|coat of arms|flag of|screenshot|postcard back|'
                  r'menu|ticket|\.svg$|\.tiff?$|\.pdf$|\.djvu$', re.I)
 
 def api(params, tries=4):
@@ -99,7 +100,8 @@ try:
             if abs(lat - r[2]) > 0.06 or abs(lon - r[3]) > 0.08: continue
             d = km(r[2], r[3], lat, lon)
             nm = any(re.search(r'\b' + re.escape(w), lab, re.I) for w in tk)
-            if d <= 1 or (d <= 5 and nm):
+            named = r[0] and not re.match('unnamed', r[0], re.I)
+            if (d <= 5 and nm) or (d <= 0.3 and named):
                 if str(i) not in cand or d < cand[str(i)][0]: cand[str(i)] = (d, f)
     ok = set(good_files(sorted({f for _, f in cand.values()})))
     for k, (d, f) in cand.items():
@@ -109,12 +111,13 @@ except Exception as e:
 have |= set(added)
 
 # ---------- 2. Commons categories named after the spring ----------
+SPRINGWORD = re.compile(r'springs?\b|sprs?\b|geyser|hot pool|blue hole|sink\b|warm|hot\b', re.I)
 def variants(name, st):
     out = []
-    for part in re.split(r',|;|\(|\)', name):
+    for part in [re.sub(r'\s*\([^)]*\)', '', name).split(',')[0]] + re.split(r',|;|\(|\)', name):
         part = re.sub(r'\s+(near|nr|at|in|above|below)\s+.*$', '', part.strip(), flags=re.I)
         part = re.sub(r'\bSprs?\b\.?', 'Springs', part)
-        if not part or not tokens(part): continue
+        if not part or not tokens(part) or not SPRINGWORD.search(part): continue
         t = ' '.join(w if (w.isupper() and len(w) <= 3 and w not in ('HOT',)) else w.capitalize() for w in part.split())
         for base in {t, t.replace(' Hot Spring', ' Hot Springs') if not t.endswith('Springs') else t}:
             out += [base, f'{base} ({STATE.get(st, st)})', f'{base}, {STATE.get(st, st)}']
@@ -137,7 +140,7 @@ for k in range(0, len(cats), 50):
     for p in q.get('pages', []):
         if p.get('missing') or p.get('invalid'): continue
         parents = ' '.join(c['title'] for c in p.get('categories', []))
-        if TOWN.search(parents): continue
+        if TOWN.search(parents) or not SPRINGWORD.search(p['title']): continue
         present.add(p['title'])
     for c in cats[k:k + 50]:
         t = redir.get(norm.get(c, c), norm.get(c, c))
