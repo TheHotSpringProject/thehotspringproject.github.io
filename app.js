@@ -180,7 +180,7 @@
   // Curated Wikipedia/Commons links, plus Commons photos geotagged at each spring (data/photos.json) for springs
   // without a curated photo.
   const mediaReady = Promise.all([
-    fetch('data/media.json?v=3').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
+    fetch('data/media.json?v=4').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
     fetch('data/photos.json?v=2').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}}))
   ]).then(([j, ph]) => {
     MEDIA = j.m || {};
