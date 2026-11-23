@@ -13,7 +13,7 @@ FREE = re.compile(r'cc[- ]?by|cc0|public domain|\bpd\b|pd-|attribution', re.I)
 NOTFREE = re.compile(r'\bnc\b|non[- ]?commercial|\bnd\b|no[- ]?deriv|fair use|non-free', re.I)
 BAD = re.compile(r'\bmap\b|locator|logo|diagram|chart|\bsign\b|signage|plaque|\bseal\b|coat of arms|flag of|screenshot|\.svg$', re.I)
 # Learned from the first hand review: wildlife/plant photos and town scenes were never picked
-SPECIES = re.compile(r'^File:[A-Z][a-z]+ [a-z]{4,}\b|inaturalist', re.I if False else 0)
+SPECIES = re.compile(r'^File:[A-Z][a-z]+ [a-z]+(us|um|is|ae|ii|ata|ens|ica|ensis|ana|ina|osa|ella|oides)\b|inaturalist', re.I)
 TOWN = re.compile(r'church|court ?house|\bbank\b|city hall|railroad|depot|\bstation\b|ski area|highway|\bstreet\b|mercantile|bakery|'
                   r'farmers market|statue|cattle|\bbarn\b|cottage|duplex|disc golf|hydroelectric|no trespassing', re.I)
 GENERIC = {'hot', 'warm', 'springs', 'spring', 'the', 'and', 'creek', 'river', 'lake', 'upper', 'lower', 'north', 'south', 'east', 'west',
