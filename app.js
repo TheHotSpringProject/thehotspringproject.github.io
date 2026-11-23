@@ -565,8 +565,9 @@
     if (MEDIA[d.i] && MEDIA[d.i][1]) getMedia(d.i).then(m => { if (!m.photo) loadGooglePhoto(d); }).catch(() => loadGooglePhoto(d));
     else loadGooglePhoto(d);
     det.querySelector('.x').onclick = () => {
+      map.closePopup();   // no leftover popup once the details are closed
       if (discBack) { backToDiscover(); return; }   // opened from Discover: go back to the cards, where you were
-      det.style.display = 'none'; if (!map._popup || !map.hasLayer(map._popup)) deselect();
+      deselect();
     };
   }
   function deselect() { sel = null; discBack = null; $('detail').style.display = 'none'; restyle(); list.querySelectorAll('.it.sel').forEach(e => e.classList.remove('sel')); setHash(''); }
