@@ -130,9 +130,10 @@ img{{display:block;width:{W}px;height:{H-band}px}}
 
 async def main():
     os.makedirs(OUT, exist_ok=True)
-    for f in pathlib.Path(OUT).glob('*.png'):
-        f.unlink()
     only = sys.argv[1:]
+    for f in pathlib.Path(OUT).glob('*.png'):   # clear only the devices being redone
+        if not only or f.name.split('-')[0] in only:
+            f.unlink()
     async with async_playwright() as p:
         b = await p.chromium.launch()
         for dev in DEVICES:

@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install playwright && python -m playwright install --with-deps chromium
-      - run: python tools/screenshots.py
+      - run: python tools/screenshots.py phone   # phones only; add tablet7 tablet10 desktop to redo those
       - name: Commit screenshots
         run: |
           git config user.name "github-actions[bot]"
