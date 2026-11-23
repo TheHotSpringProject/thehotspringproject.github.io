@@ -651,7 +651,9 @@
   }
   // Long press on the map (right-click on a computer): explore the springs around that spot, nearest first;
   // swipe or use the arrows to go on to the next one.
+  $('map').addEventListener('contextmenu', e => e.preventDefault());   // no browser menu on long press / right-click
   map.on('contextmenu', e => {
+    try { window.getSelection().removeAllRanges(); } catch (err) {}
     const pool = S.filter(passes);
     if (!pool.length) return;
     const km = x => kmBetween(e.latlng.lat, e.latlng.lng, x.lat, x.lon);

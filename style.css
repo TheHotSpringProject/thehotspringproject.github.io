@@ -358,3 +358,6 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 .hint{position:fixed;left:50%;top:calc(52px + env(safe-area-inset-top));transform:translate(-50%,-8px);z-index:3000;background:rgba(25,40,55,.92);color:#fff;
   font-size:13px;padding:8px 14px;border-radius:18px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 40px);text-align:center}
 .hint.on{opacity:1;transform:translate(-50%,0)}
+
+/* Long press on the map explores nearby springs: don't let it select text or open the browser's callout */
+#mapwrap,#mapwrap *,.leaflet-container{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
