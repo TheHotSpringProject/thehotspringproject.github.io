@@ -1,0 +1,21 @@
+name: Check photo locations
+# Manual. Drops Wikimedia photos/articles whose coordinates are more than 10 km from their spring.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python tools/check_photo_coords.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/media.json data/photos.json data/submitted.json data/springs-world.json data/photo_coord_check.json
+          git diff --cached --quiet || git commit -m "Remove photos and articles located far from their spring"
+          git pull --rebase && git push
