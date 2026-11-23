@@ -241,7 +241,7 @@
         d.m = GROUP ? d.hit : L.featureGroup([d.hit, d.ic]);
       } else d.m = L.circleMarker([d.lat, d.lon], {renderer, radius:5, weight:1, color:'#000', opacity:.55, fillColor:colorOf(d), fillOpacity:.95});
       if (canHover) d.m.bindTooltip(() => esc(title(d.name)) + ' · ' + fmt(d), {direction:'top', offset:[0,-4]});
-      d.m.on('click', () => select(d, false));
+      d.m.on('click', () => { select(d, false); showDetail(d); });   // a tap on the map opens the full details
       d.m._d = d;
     });
     if (GROUP) setupCluster();
