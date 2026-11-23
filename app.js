@@ -269,7 +269,7 @@
     if (world) {
       const li = document.createElement('li');
       li.innerHTML = '<b>Springs outside the US and Canada (preview):</b> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, available under the Open Database License, and <a href="https://www.wikidata.org/" target="_blank" rel="noopener">Wikidata</a> (CC0). Regions from GeoNames (CC BY 4.0). Soaking estimates for these come from map tags and names only.';
-      const ul = document.querySelector('#about ul, dialog ul'); if (ul) ul.appendChild(li);
+      const ul = document.querySelector('dialog#about ul'); if (ul) ul.appendChild(li);
     }
     if (world) { const o = document.createElement('option'); o.value = 'world'; o.textContent = 'Outside the US and Canada'; srcSel.insertBefore(o, srcSel.querySelector('option[value="ss"]')); }
     setUnit(unit); restyle(); update();
@@ -559,7 +559,7 @@
       (d.ca || d.world ? '' : '<tr><td>Listed in</td><td>' + (d.added ? 'Added from other data sources (not in NOAA\'s 1980 list)' : 'NOAA Thermal Springs List (1980)') +
         (d.ss || d.moved ? '<div class="srccite">' + (d.ss ? 'Reading: ' + esc(SS_SRC[d.ss[3]] || '') : '') + (d.moved && (!d.ss || d.moved[2] !== d.ss[3]) ? (d.ss ? '<br>' : '') + 'Location: ' + esc(SS_SRC[d.moved[2]] || '') : '') + (/^(Water Quality Portal|Nevada Bureau|New Mexico Bureau)/.test(SS_SRC[(d.ss || d.moved)[d.ss ? 3 : 2]] || '') ? '' : ' · via the <a href="https://doi.org/10.5281/zenodo.8125526" target="_blank" rel="noopener">National Geothermal Data System</a> (CC BY 4.0)') + '</div>' : '') + '</td></tr>') +
       (dist != null ? '<tr><td>Distance from you</td><td>' + Math.round(dist).toLocaleString() + ' mi (straight line)</td></tr>' : '') +
-      '</table><div class="gphoto" id="gphoto" hidden></div>' + (MEDIA[d.i] ? '<div class="about" id="about"><div class="ab-load">Loading description…</div></div>' : '') + '<a class="gbtn" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + ' Open in Google Maps</a>' + addPhotoHtml(d);
+      '</table><div class="gphoto" id="gphoto" hidden></div>' + (MEDIA[d.i] ? '<div class="about" id="sabout"><div class="ab-load">Loading description…</div></div>' : '') + '<a class="gbtn" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + ' Open in Google Maps</a>' + addPhotoHtml(d);
     // Pinned header (name + close) above a scrolling body, so the panel can be closed from anywhere in it.
     const head = document.createElement('div'), body = document.createElement('div');
     head.className = 'dhead'; body.className = 'dbody';
@@ -592,7 +592,7 @@
     const sRow = rowOf('Soaking');
     if (sRow) mainT.tBodies[0].prepend(sRow);
     if (tRow) (sRow ? sRow.after(tRow) : mainT.tBodies[0].prepend(tRow));
-    const gp = body.querySelector('#gphoto'), ab = body.querySelector('#about');
+    const gp = body.querySelector('#gphoto'), ab = body.querySelector('#sabout');
     if (ab) mainT.before(ab);
     if (gp) (ab || mainT).before(gp);
     // Soaking estimate and temperature read on their own, without row labels
@@ -649,6 +649,22 @@
     det.classList.remove('swl', 'swr'); void det.offsetWidth; det.classList.add(dir > 0 ? 'swl' : 'swr');
     select(S[nearSeq.ids[np]], true);
   }
+  // Long press on the map (right-click on a computer): explore the springs around that spot, nearest first;
+  // swipe or use the arrows to go on to the next one.
+  map.on('contextmenu', e => {
+    const pool = S.filter(passes);
+    if (!pool.length) return;
+    const km = x => kmBetween(e.latlng.lat, e.latlng.lng, x.lat, x.lon);
+    nearSeq = {ids: pool.sort((a, b) => km(a) - km(b)).slice(0, 60).map(x => x.i), pos: 0};
+    nearSwipe = true;
+    select(S[nearSeq.ids[0]], false);
+    hint('Exploring springs near here: swipe for the next one');
+  });
+  let hintT = null;
+  function hint(msg) {
+    let h = $('hint'); if (!h) { h = document.createElement('div'); h.id = 'hint'; h.className = 'hint'; document.body.appendChild(h); }
+    h.textContent = msg; h.classList.add('on'); clearTimeout(hintT); hintT = setTimeout(() => h.classList.remove('on'), 2600);
+  }
   {
     const det = $('detail'); let x0 = null, y0 = 0, t0 = 0;
     det.addEventListener('touchstart', e => {
@@ -673,10 +689,19 @@
     // No small popup card any more: a spring always opens its full details.
     const det = $('detail');
     if (det.style.display !== 'block' || det.dataset.i !== String(d.i)) showDetail(d);
-    if (fly) {
-      const z = Math.max(map.getZoom(), 11);
-      const target = pw ? map.unproject(map.project([d.lat, d.lon], z).subtract([pw / 2, 0]), z) : L.latLng(d.lat, d.lon);
-      map.flyTo(target, z, {duration:.8});
+    const phone = window.innerWidth <= 760;
+    if (fly || phone) {
+      const z = fly ? Math.max(map.getZoom(), 11) : map.getZoom();
+      let target = pw ? map.unproject(map.project([d.lat, d.lon], z).subtract([pw / 2, 0]), z) : L.latLng(d.lat, d.lon);
+      if (phone) {   // centre the spring in the part of the map still visible above the details sheet
+        const mr = $('map').getBoundingClientRect(), sheetTop = window.innerHeight * 0.38;   // the sheet is at most 62% tall
+        const visTop = Math.max(mr.top, 0), visBot = Math.min(mr.bottom, sheetTop);
+        if (visBot - visTop > 40) {
+          const wantY = (visTop + visBot) / 2 - mr.top;
+          target = map.unproject(map.project([d.lat, d.lon], z).add([0, mr.height / 2 - wantY]), z);
+        }
+      }
+      fly ? map.flyTo(target, z, {duration:.8}) : map.panTo(target, {animate:true, duration:.4});
     }
     setHash('spring-' + d.i);
   }
@@ -711,7 +736,7 @@
   }
   async function loadAbout(d) {
     const m = await getMedia(d.i);
-    const box = $('about'); if (!box || sel !== d) return;
+    const box = $('sabout'); if (!box || sel !== d) return;
     let h = '';
     if (m.photo) {
       const tk = fmtDate(m.photo.taken), up = fmtDate(m.photo.uploaded);

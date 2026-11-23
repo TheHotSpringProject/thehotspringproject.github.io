@@ -273,9 +273,11 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail .dhead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;background:#fbfaf4;margin:0 -12px 6px;padding:8px 12px 6px;border-bottom:1px solid var(--line)}
 #detail .dhead h2{margin:0;flex:1;min-width:0}
 @media (max-width:760px){
-  /* phones: details open as a full-screen sheet over the map */
-  #detail{position:fixed;left:0;right:0;top:calc(38px + env(safe-area-inset-top));bottom:0;z-index:1500;max-height:none;border:0;
-    padding:0 calc(14px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));box-shadow:0 -2px 12px rgba(0,0,0,.15)}
+  /* phones: details open as a sheet over the lower part of the screen, leaving the map visible above it */
+  #detail{position:fixed;left:0;right:0;top:auto;bottom:0;height:auto;min-height:34vh;max-height:62vh;max-height:62dvh;z-index:1500;border:0;border-radius:16px 16px 0 0;
+    padding:0 calc(14px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));box-shadow:0 -3px 14px rgba(0,0,0,.22)}
+  #detail .dhead{border-radius:16px 16px 0 0}
+  #detail .dhead::before{content:'';position:absolute;left:50%;top:5px;width:38px;height:4px;margin-left:-19px;border-radius:2px;background:#c9ccd0}
   #detail .dhead{margin:0 calc(-14px - env(safe-area-inset-right)) 8px calc(-14px - env(safe-area-inset-left));padding:10px calc(14px + env(safe-area-inset-right)) 8px calc(14px + env(safe-area-inset-left))}
   #detail .dhead h2{font-size:17px}
   #detail .x{font-size:22px;padding:8px 10px}
@@ -347,3 +349,12 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail.swr .dbody{animation:swr .22s ease-out}
 @keyframes swl{from{transform:translateX(40px);opacity:.3}to{transform:none;opacity:1}}
 @keyframes swr{from{transform:translateX(-40px);opacity:.3}to{transform:none;opacity:1}}
+
+/* The spring's photo and description sit directly in the details: no box or shadow */
+#detail .about{border-top:0;padding-top:0;margin:4px 0 8px}
+#detail .about img{max-height:280px;border-radius:8px}
+
+/* Short hints (e.g. after a long press on the map) */
+.hint{position:fixed;left:50%;top:calc(52px + env(safe-area-inset-top));transform:translate(-50%,-8px);z-index:3000;background:rgba(25,40,55,.92);color:#fff;
+  font-size:13px;padding:8px 14px;border-radius:18px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 40px);text-align:center}
+.hint.on{opacity:1;transform:translate(-50%,0)}
