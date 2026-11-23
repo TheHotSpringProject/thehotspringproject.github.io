@@ -324,8 +324,8 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail .dbody > table{margin-top:10px}
 
 /* Icon buttons in the details panel: save, visited, Google Maps, add a photo */
-#detail .dacts{display:flex;gap:10px;margin:12px 0 4px}
-#detail .ib{width:46px;height:42px;border:1px solid #c9d1da;border-radius:10px;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+#detail .dacts{display:flex;justify-content:space-between;gap:8px;margin:12px 0 4px}
+#detail .ib{flex:1 1 0;max-width:84px;height:54px;flex-direction:column;gap:3px;text-decoration:none;border:1px solid #c9d1da;border-radius:10px;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 #detail .ib svg{fill:none}
 #detail .ib:hover{background:#f1f4f7}
 #detail .isav.on{color:#c98a00;border-color:#e3b64a;background:#fff8e6}
@@ -336,3 +336,5 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail .addph[hidden]{display:none}
 #detail .addph .addttl{font-weight:600;color:var(--navy);padding:9px 0 4px}
 #detail tr.nolab td{padding:3px 0}
+#detail .ib .ibl{font-size:10px;line-height:1;font-weight:600;letter-spacing:.01em}
+#detail .ivis.on .ibl{color:#fff}

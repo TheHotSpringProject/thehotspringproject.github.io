@@ -420,6 +420,7 @@
     document.querySelectorAll('.ib.i' + which).forEach(b => {
       const on = set.has(d.i); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
       b.title = which === 'sav' ? (on ? 'Saved' : 'Save') : (on ? 'Visited' : 'Mark visited');
+      const l = b.querySelector('.ibl'); if (l) l.textContent = which === 'sav' ? (on ? 'Saved' : 'Save') : (on ? 'Visited' : 'Visited?');
     });
     if (which === 'sav') restyle(); renderList();
   }
@@ -567,10 +568,10 @@
     const bar = document.createElement('div'); bar.className = 'dacts';
     const sv = saved.has(d.i), vi = visited.has(d.i);
     bar.innerHTML =
-      '<button type="button" class="ib isav' + (sv ? ' on' : '') + '" aria-pressed="' + sv + '" title="' + (sv ? 'Saved' : 'Save') + '" aria-label="Save">' + I_STAR + '</button>' +
-      '<button type="button" class="ib ivis' + (vi ? ' on' : '') + '" aria-pressed="' + vi + '" title="' + (vi ? 'Visited' : 'Mark visited') + '" aria-label="Mark visited">' + I_CHECK + '</button>' +
-      '<a class="ib imap" target="_blank" rel="noopener" href="' + gmaps(d) + '" title="Open in Google Maps" aria-label="Open in Google Maps">' + I_MAP + '</a>' +
-      (addInfo ? '<button type="button" class="ib iph" aria-expanded="false" title="Add your photo" aria-label="Add your photo">' + I_CAMPLUS + '</button>' : '');
+      '<button type="button" class="ib isav' + (sv ? ' on' : '') + '" aria-pressed="' + sv + '" title="' + (sv ? 'Saved' : 'Save') + '" aria-label="Save">' + I_STAR + '<span class="ibl">' + (sv ? 'Saved' : 'Save') + '</span></button>' +
+      '<button type="button" class="ib ivis' + (vi ? ' on' : '') + '" aria-pressed="' + vi + '" title="' + (vi ? 'Visited' : 'Mark visited') + '" aria-label="Mark visited">' + I_CHECK + '<span class="ibl">' + (vi ? 'Visited' : 'Visited?') + '</span></button>' +
+      '<a class="ib imap" target="_blank" rel="noopener" href="' + gmaps(d) + '" title="Open in Google Maps" aria-label="Open in Google Maps">' + I_MAP + '<span class="ibl">Directions</span></a>' +
+      (addInfo ? '<button type="button" class="ib iph" aria-expanded="false" title="Add your photo" aria-label="Add your photo">' + I_CAMPLUS + '<span class="ibl">Add photo</span></button>' : '');
     mainT.after(bar);
     bar.querySelector('.isav').onclick = () => toggleMine(d, 'sav');
     bar.querySelector('.ivis').onclick = () => toggleMine(d, 'vis');
