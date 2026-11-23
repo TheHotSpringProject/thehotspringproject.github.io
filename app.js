@@ -532,8 +532,26 @@
     while (det.firstChild) body.appendChild(det.firstChild);
     head.append(body.querySelector('h2'), body.querySelector('.x')); det.append(head, body); det.scrollTop = 0;
     // Reference rows (other readings, land, survey location, USGS quad, sources) go in a collapsed section at the bottom.
-    const MORE = /^(Newer reading|Other reading|Land|Location|USGS quadrangle|Listed in)$/;
-    const rows = [...body.querySelectorAll('table:first-of-type tr')].filter(tr => MORE.test(tr.cells[0].textContent.trim()));
+    const MORE = /^(State|Province or territory|Country|Region|Local name|Latitude, longitude|Newer reading|Other reading|Land|Location|USGS quadrangle|Listed in)$/;
+    const mainT = body.querySelector('table');
+    const rowOf = label => [...mainT.rows].find(tr => tr.cells[0].textContent.trim().startsWith(label));
+    // Temperature in the chosen unit only, followed by the class; the separate Class row goes
+    const tRow = rowOf('Temperature'), cRow = rowOf('Class');
+    if (tRow) {
+      const note = tRow.cells[1].querySelector('.srcnote');
+      const t = d.f == null ? (d.cls ? 'No reading listed' : 'Not available') : (unit === 'F' ? d.f + '°F' : d.c + '°C');
+      tRow.cells[1].innerHTML = '<span class="dot" style="background:' + colorOf(d) + ';vertical-align:-1px"></span> ' + t + (d.cls && LABEL[d.cls] ? ' · ' + LABEL[d.cls] : '');
+      if (note) tRow.cells[1].append(' ', note);
+    }
+    if (cRow) cRow.remove();
+    // Order: description (photo and text) under the name, then soaking estimate, then temperature
+    const sRow = rowOf('Soaking');
+    if (sRow) mainT.tBodies[0].prepend(sRow);
+    if (tRow) (sRow ? sRow.after(tRow) : mainT.tBodies[0].prepend(tRow));
+    const gp = body.querySelector('#gphoto'), ab = body.querySelector('#about');
+    if (ab) mainT.before(ab);
+    if (gp) (ab || mainT).before(gp);
+    const rows = [...mainT.rows].filter(tr => MORE.test(tr.cells[0].textContent.trim()));
     if (rows.length) {
       const dd = document.createElement('details'); dd.className = 'moreinfo';
       dd.innerHTML = '<summary>Detailed information</summary><table></table>';
