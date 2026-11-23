@@ -12,6 +12,10 @@ UA = {'User-Agent': 'TheHotSpringProject/1.0 (https://thehotspringproject.github
 FREE = re.compile(r'cc[- ]?by|cc0|public domain|\bpd\b|pd-|attribution', re.I)
 NOTFREE = re.compile(r'\bnc\b|non[- ]?commercial|\bnd\b|no[- ]?deriv|fair use|non-free', re.I)
 BAD = re.compile(r'\bmap\b|locator|logo|diagram|chart|\bsign\b|signage|plaque|\bseal\b|coat of arms|flag of|screenshot|\.svg$', re.I)
+# Learned from the first hand review: wildlife/plant photos and town scenes were never picked
+SPECIES = re.compile(r'^File:[A-Z][a-z]+ [a-z]{4,}\b|inaturalist', re.I if False else 0)
+TOWN = re.compile(r'church|court ?house|\bbank\b|city hall|railroad|depot|\bstation\b|ski area|highway|\bstreet\b|mercantile|bakery|'
+                  r'farmers market|statue|cattle|\bbarn\b|cottage|duplex|disc golf|hydroelectric|no trespassing', re.I)
 GENERIC = {'hot', 'warm', 'springs', 'spring', 'the', 'and', 'creek', 'river', 'lake', 'upper', 'lower', 'north', 'south', 'east', 'west',
            'big', 'little', 'mineral', 'sulphur', 'sulfur', 'thermal', 'group', 'resort', 'unnamed', 'near'}
 
@@ -59,7 +63,8 @@ for n, (_, st, name, i, code, cur) in enumerate(todo):
     g = api({'action': 'query', 'list': 'geosearch', 'gscoord': f'{r[2]}|{r[3]}', 'gsradius': 1000, 'gsnamespace': 6, 'gslimit': 60})
     hits = (g.get('query') or {}).get('geosearch') or []
     dist = {h['title']: h.get('dist', 0) / 1000 for h in hits}
-    titles = [h['title'] for h in hits if re.search(r'\.(jpe?g|png)$', h['title'], re.I) and not BAD.search(h['title'])]
+    titles = [h['title'] for h in hits if re.search(r'\.(jpe?g|png)$', h['title'], re.I) and not BAD.search(h['title'])
+              and not SPECIES.search(h['title']) and not TOWN.search(h['title'])]
     if cur and cur not in titles: titles.insert(0, cur)
     if not titles: continue
     info = {}

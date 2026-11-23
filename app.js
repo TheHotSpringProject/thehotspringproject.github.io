@@ -185,7 +185,7 @@
   // without a curated photo.
   const mediaReady = Promise.all([
     fetch('data/media.json?v=5').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
-    fetch('data/photos.json?v=3').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
+    fetch('data/photos.json?v=4').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
     fetch('data/submitted.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}})),
     fetch('data/picks.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}}))
   ]).then(([j, ph, sub, pk]) => {
