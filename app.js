@@ -181,9 +181,12 @@
   // without a curated photo.
   const mediaReady = Promise.all([
     fetch('data/media.json?v=4').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
-    fetch('data/photos.json?v=2').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}}))
-  ]).then(([j, ph]) => {
+    fetch('data/photos.json?v=2').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
+    fetch('data/submitted.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}}))
+  ]).then(([j, ph, sub]) => {
     MEDIA = j.m || {};
+    // photos shared through the app come first, then curated ones, then automatic matches
+    Object.entries(sub.s || {}).forEach(([i, r]) => { MEDIA[i] = [(MEDIA[i] || [''])[0], r.file]; });
     Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
   });
   const recReady = fetch('data/recreation.json?v=7').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
@@ -434,7 +437,7 @@
     det.innerHTML = '<div class="dhead"><h2>Discover springs</h2><button class="x" title="Close">✕</button></div>' +
       '<div class="dbody"><div class="dsub" id="dsub">Finding springs near you…</div><div class="dgrid" id="dgrid"></div>' +
       '<div class="dmore"><button class="mybtn" id="dmore" hidden>Show more</button><button class="mybtn" id="dshuf" hidden>Shuffle</button></div>' +
-      '<div class="srccite">Photos: Wikimedia Commons. Each spring\'s details credit the photographer and licence.</div></div>';
+      '<div class="srccite">Photos: Wikimedia Commons. Each spring\'s details credit the photographer and licence. Have a photo of a spring? Open it and tap “Add your photo”.</div></div>';
     det.scrollTop = 0;
     det.querySelector('.x').onclick = () => { det.style.display = 'none'; };
     $('dmore').onclick = () => discMore();
@@ -479,6 +482,27 @@
   }
   $('discbtn').onclick = openDiscover;
 
+  // ---------- Add your photo ----------
+  // Photos are shared through Wikimedia Commons, so they carry a free licence and the photographer's credit. The Upload
+  // Wizard opens with the spring's name, place and a link back here filled in; a weekly job (tools/submitted_photos.py)
+  // finds files with that link and features them for the spring.
+  function uploadUrl(d) {
+    const place = NAMES[d.st] || d.st, nm = title(d.name);
+    const q = {caption: nm + ', ' + place, descriptionlang: 'en',
+      description: nm + ', a hot spring in ' + place + '. Shared through The Hot Spring Project (https://thehotspringproject.github.io/#spring-' + d.i + ').',
+      lat: d.lat.toFixed(5), lon: d.lon.toFixed(5)};
+    return 'https://commons.wikimedia.org/wiki/Special:UploadWizard?' + new URLSearchParams(q).toString();
+  }
+  function addPhotoHtml(d) {
+    if (d.world) return '';
+    return '<details class="addph"><summary>' + CAM + ' Add your photo of this spring</summary>' +
+      '<p>Have a good photo of ' + esc(title(d.name)) + '? Share it and we may feature it here, credited to you.</p>' +
+      '<ul><li>It must be your own photo.</li><li>Photos are shared on Wikimedia Commons under a free licence (usually CC BY-SA 4.0), which lets anyone reuse them with credit. You\'ll need a free Wikimedia account.</li>' +
+      '<li>The form opens with this spring\'s name and location filled in. Please keep the link to The Hot Spring Project in the description; that\'s how we find your photo.</li>' +
+      '<li>New photos usually appear within a week.</li></ul>' +
+      '<a class="mybtn addgo" target="_blank" rel="noopener" href="' + esc(uploadUrl(d)) + '">Continue to Wikimedia Commons ›</a></details>';
+  }
+
   function showDetail(d) {
     const det = $('detail'); det.style.display = 'block';
     const lat = Math.abs(d.lat).toFixed(3) + '°' + (d.lat >= 0 ? 'N' : 'S'), lon = Math.abs(d.lon).toFixed(3) + '°' + (d.lon < 0 ? 'W' : 'E');
@@ -501,7 +525,7 @@
       (d.ca || d.world ? '' : '<tr><td>Listed in</td><td>' + (d.added ? 'Added from other data sources (not in NOAA\'s 1980 list)' : 'NOAA Thermal Springs List (1980)') +
         (d.ss || d.moved ? '<div class="srccite">' + (d.ss ? 'Reading: ' + esc(SS_SRC[d.ss[3]] || '') : '') + (d.moved && (!d.ss || d.moved[2] !== d.ss[3]) ? (d.ss ? '<br>' : '') + 'Location: ' + esc(SS_SRC[d.moved[2]] || '') : '') + (/^(Water Quality Portal|Nevada Bureau|New Mexico Bureau)/.test(SS_SRC[(d.ss || d.moved)[d.ss ? 3 : 2]] || '') ? '' : ' · via the <a href="https://doi.org/10.5281/zenodo.8125526" target="_blank" rel="noopener">National Geothermal Data System</a> (CC BY 4.0)') + '</div>' : '') + '</td></tr>') +
       (dist != null ? '<tr><td>Distance from you</td><td>' + Math.round(dist).toLocaleString() + ' mi (straight line)</td></tr>' : '') +
-      '</table><div class="gphoto" id="gphoto" hidden></div>' + (MEDIA[d.i] ? '<div class="about" id="about"><div class="ab-load">Loading description…</div></div>' : '') + '<a class="gbtn" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + ' Open in Google Maps</a>';
+      '</table><div class="gphoto" id="gphoto" hidden></div>' + (MEDIA[d.i] ? '<div class="about" id="about"><div class="ab-load">Loading description…</div></div>' : '') + '<a class="gbtn" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + ' Open in Google Maps</a>' + addPhotoHtml(d);
     // Pinned header (name + close) above a scrolling body, so the panel can be closed from anywhere in it.
     const head = document.createElement('div'), body = document.createElement('div');
     head.className = 'dhead'; body.className = 'dbody';

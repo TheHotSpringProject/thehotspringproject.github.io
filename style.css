@@ -307,3 +307,12 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail .dm{font-size:11.5px;color:var(--muted);margin:0 8px}
 #detail .dsoak{position:absolute;top:6px;left:6px;background:rgba(20,30,40,.75);color:#fff;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:9px}
 #detail .dmore{display:flex;gap:8px;justify-content:center;margin:12px 0 8px}
+
+/* Add your photo (details panel) */
+#detail .addph{margin:12px 0 4px;border:1px solid var(--line);border-radius:6px;padding:0 10px;background:#fbfaf6}
+#detail .addph summary{cursor:pointer;padding:9px 0;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px;list-style:none}
+#detail .addph summary::-webkit-details-marker{display:none}
+#detail .addph p{margin:0 0 6px;font-size:13px}
+#detail .addph ul{margin:0 0 10px;padding-left:18px;font-size:12.5px;color:var(--muted)}
+#detail .addph li{margin:3px 0}
+#detail .addph .addgo{display:inline-block;margin:0 0 10px;text-decoration:none}
