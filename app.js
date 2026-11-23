@@ -245,7 +245,7 @@
         d.m = GROUP ? d.hit : L.featureGroup([d.hit, d.ic]);
       } else d.m = L.circleMarker([d.lat, d.lon], {renderer, radius:5, weight:1, color:'#000', opacity:.55, fillColor:colorOf(d), fillOpacity:.95});
       if (canHover) d.m.bindTooltip(() => esc(title(d.name)) + ' · ' + fmt(d), {direction:'top', offset:[0,-4]});
-      d.m.on('click', () => { select(d, false); showDetail(d); });   // a tap on the map opens the full details
+      d.m.on('click', e => { const t = pickTapped(d, e); select(t, false); showDetail(t); });   // a tap on the map opens the full details
       d.m._d = d;
     });
     if (GROUP) setupCluster();
@@ -269,6 +269,25 @@
     if (world) { const o = document.createElement('option'); o.value = 'world'; o.textContent = 'Outside the US and Canada'; srcSel.insertBefore(o, srcSel.querySelector('option[value="ss"]')); }
     setUnit(unit); restyle(); update();
     openFromHash();
+  }
+
+  // ---------- Which spring did a tap mean? ----------
+  // When several shown springs sit under the finger (within about 16 px), prefer the likeliest soaking spot:
+  // known commercial/wild, then possibly used, then no evidence, then unlikely; ties go to the nearest.
+  const SOAK_RANK = {D:4, W:4, P:3, U:2, N:1};
+  function pickTapped(d, e) {
+    if (!e || !e.containerPoint) return d;
+    const pt = e.containerPoint, R = (window.matchMedia('(pointer:coarse)').matches ? 18 : 12);
+    let best = d, bestKey = null;
+    S.forEach(x => {
+      const shown = cluster ? (x.inC && map.hasLayer(x.hit || x.m)) : map.hasLayer(x.m);
+      if (!shown) return;
+      const p = map.latLngToContainerPoint([x.lat, x.lon]), dist = p.distanceTo(pt);
+      if (dist > R) return;
+      const key = [(x.rec && SOAK_RANK[x.rec[0]]) || 0, -dist];
+      if (!bestKey || key[0] > bestKey[0] || (key[0] === bestKey[0] && key[1] > bestKey[1])) { best = x; bestKey = key; }
+    });
+    return best;
   }
 
   // ---------- Grouping (preview) ----------
