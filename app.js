@@ -66,6 +66,10 @@
   const MOON = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>';
   const SUN = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g></svg>';
   const SAT = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor" transform="rotate(45 13 11)"><rect x="9.4" y="8.6" width="5.2" height="6.8" rx="1"/><rect x="1.6" y="9.6" width="6.6" height="4.8" rx=".7"/><rect x="15.8" y="9.6" width="6.6" height="4.8" rx=".7"/><rect x="8.2" y="11.4" width="1.4" height="1.2"/><rect x="14.4" y="11.4" width="1.4" height="1.2"/></g><path d="M3.6 14.6a5.6 5.6 0 0 0 5.8 5.8M3.4 18.4a2.2 2.2 0 0 0 2.2 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const I_STAR = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  const I_CHECK = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M7.8 12.3l2.8 2.8 5.6-5.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const I_MAP = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.2l5.3-2 6.4 2.2 5.3-2v13.6l-5.3 2-6.4-2.2-5.3 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 4.2v13.6M15.2 6.4V20" stroke="currentColor" stroke-width="1.8"/></svg>';
+  const I_CAMPLUS = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8.5h3l1.8-2.7h5.4l1.8 2.7h1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3.5 8.5v10a1 1 0 0 0 1 1h12.5a1 1 0 0 0 1-1v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="10.6" cy="13.6" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.5 3.5v7M16 7h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const ESRI_ATTR = 'Tiles &copy; Esri and contributors';
   const USGS_ATTR = 'Tiles: <a href="https://www.usgs.gov/programs/national-geospatial-program/national-map" target="_blank" rel="noopener">USGS The National Map</a>';
   const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
@@ -413,6 +417,10 @@
       const on = set.has(d.i); b.classList.toggle('on', on);
       b.textContent = which === 'sav' ? (on ? '★ Saved' : '☆ Save') : (on ? '✓ Visited' : b.classList.contains('pb') ? 'Visited?' : 'Mark visited');
     });
+    document.querySelectorAll('.ib.i' + which).forEach(b => {
+      const on = set.has(d.i); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      b.title = which === 'sav' ? (on ? 'Saved' : 'Save') : (on ? 'Visited' : 'Mark visited');
+    });
     if (which === 'sav') restyle(); renderList();
   }
   function select(d, fly) {
@@ -551,6 +559,28 @@
     const gp = body.querySelector('#gphoto'), ab = body.querySelector('#about');
     if (ab) mainT.before(ab);
     if (gp) (ab || mainT).before(gp);
+    // Soaking estimate and temperature read on their own, without row labels
+    [sRow, tRow].forEach(tr => { if (tr && tr.cells.length > 1) { tr.cells[0].remove(); tr.cells[0].colSpan = 2; tr.classList.add('nolab'); } });
+    // Icon buttons under the text: save, visited, Google Maps, add a photo
+    body.querySelector('.mybtns')?.remove(); body.querySelector('.gbtn')?.remove();
+    const addInfo = body.querySelector('.addph'); if (addInfo) addInfo.remove();
+    const bar = document.createElement('div'); bar.className = 'dacts';
+    const sv = saved.has(d.i), vi = visited.has(d.i);
+    bar.innerHTML =
+      '<button type="button" class="ib isav' + (sv ? ' on' : '') + '" aria-pressed="' + sv + '" title="' + (sv ? 'Saved' : 'Save') + '" aria-label="Save">' + I_STAR + '</button>' +
+      '<button type="button" class="ib ivis' + (vi ? ' on' : '') + '" aria-pressed="' + vi + '" title="' + (vi ? 'Visited' : 'Mark visited') + '" aria-label="Mark visited">' + I_CHECK + '</button>' +
+      '<a class="ib imap" target="_blank" rel="noopener" href="' + gmaps(d) + '" title="Open in Google Maps" aria-label="Open in Google Maps">' + I_MAP + '</a>' +
+      (addInfo ? '<button type="button" class="ib iph" aria-expanded="false" title="Add your photo" aria-label="Add your photo">' + I_CAMPLUS + '</button>' : '');
+    mainT.after(bar);
+    bar.querySelector('.isav').onclick = () => toggleMine(d, 'sav');
+    bar.querySelector('.ivis').onclick = () => toggleMine(d, 'vis');
+    if (addInfo) {
+      const box = document.createElement('div'); box.className = 'addph'; box.hidden = true;
+      box.innerHTML = addInfo.innerHTML.replace(/<summary>[\s\S]*?<\/summary>/, '<div class="addttl">Add your photo of this spring</div>');
+      bar.after(box);
+      const b = bar.querySelector('.iph');
+      b.onclick = () => { box.hidden = !box.hidden; b.setAttribute('aria-expanded', !box.hidden); b.classList.toggle('on', !box.hidden); };
+    }
     const rows = [...mainT.rows].filter(tr => MORE.test(tr.cells[0].textContent.trim()));
     if (rows.length) {
       const dd = document.createElement('details'); dd.className = 'moreinfo';
@@ -558,8 +588,6 @@
       rows.forEach(tr => dd.querySelector('table').appendChild(tr));
       body.appendChild(dd);
     }
-    det.querySelector('.mybtn.sav').onclick = () => toggleMine(d, 'sav');
-    det.querySelector('.mybtn.vis').onclick = () => toggleMine(d, 'vis');
     if (MEDIA[d.i]) loadAbout(d);
     // Google's photo only when there is no Wikipedia/Commons photo (it also saves a paid lookup)
     if (MEDIA[d.i] && MEDIA[d.i][1]) getMedia(d.i).then(m => { if (!m.photo) loadGooglePhoto(d); }).catch(() => loadGooglePhoto(d));

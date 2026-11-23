@@ -322,3 +322,17 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail .moreinfo summary{cursor:pointer;padding:8px 0;font-weight:600;color:var(--navy);font-size:13px}
 #detail .moreinfo table{margin-top:2px}
 #detail .dbody > table{margin-top:10px}
+
+/* Icon buttons in the details panel: save, visited, Google Maps, add a photo */
+#detail .dacts{display:flex;gap:10px;margin:12px 0 4px}
+#detail .ib{width:46px;height:42px;border:1px solid #c9d1da;border-radius:10px;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+#detail .ib svg{fill:none}
+#detail .ib:hover{background:#f1f4f7}
+#detail .isav.on{color:#c98a00;border-color:#e3b64a;background:#fff8e6}
+#detail .isav.on svg{fill:#f2b81f}
+#detail .ivis.on{color:#fff;background:#2e7d4f;border-color:#2e7d4f}
+#detail .ivis.on circle{fill:#2e7d4f}
+#detail .iph.on{background:#e8eef5}
+#detail .addph[hidden]{display:none}
+#detail .addph .addttl{font-weight:600;color:var(--navy);padding:9px 0 4px}
+#detail tr.nolab td{padding:3px 0}
