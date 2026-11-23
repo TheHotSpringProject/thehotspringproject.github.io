@@ -347,6 +347,7 @@
   function passes(d) {
     const term = q.value.trim().toLowerCase(), st = stSel.value, m = minF(), lf = landSel.value, mf = mineSel.value;
     const kf = soakSel.value;
+    if ($('photoOnly').checked && !(MEDIA[d.i] && MEDIA[d.i][1])) return false;   // only springs with a Wikimedia photo
     if (kf && !(kf === 'DW' ? (d.rec && (d.rec[0] === 'D' || d.rec[0] === 'W')) : d.rec && d.rec[0] === kf)) return false;
     const sf = srcSel.value;
     if (sf && (sf === 'noaa' ? d.added : sf === 'added' ? !d.added : sf === 'ca' ? !d.ca : sf === 'world' ? !d.world : !(d.ss || d.added))) return false;
@@ -766,7 +767,7 @@
   }
   $('units').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setUnit(b.dataset.u); });
   function activeBadge() {
-    let n = 0; if (soakSel.value) n++; if (srcSel.value) n++; if (landSel.value) n++; if (mineSel.value) n++; if (q.value.trim()) n++; if (stSel.value) n++; if (minF() > 40) n++; if (sortSel.value !== 'name') n++; if (!$('inView').checked) n++;
+    let n = 0; if (soakSel.value) n++; if (srcSel.value) n++; if (landSel.value) n++; if (mineSel.value) n++; if (q.value.trim()) n++; if (stSel.value) n++; if (minF() > 40) n++; if (sortSel.value !== 'name') n++; if (!$('inView').checked) n++; if ($('photoOnly').checked) n++;
     const a = $('active'); a.textContent = n + (n === 1 ? ' filter' : ' filters'); a.style.display = n ? 'inline' : 'none';
   }
   const fold = $('fold'), ctr = $('controls');
@@ -786,6 +787,7 @@
   srcSel.addEventListener('change', update);
   soakSel.addEventListener('change', update);
   $('inView').addEventListener('change', update);
+  $('photoOnly').addEventListener('change', update);
   sortSel.addEventListener('change', () => { if (sortSel.value === 'near' && !me) locate(false); update(); });
   minT.addEventListener('input', () => { minLabel(); update(); });
   stSel.addEventListener('change', () => {
