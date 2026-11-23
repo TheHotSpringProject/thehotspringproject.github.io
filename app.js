@@ -1131,6 +1131,7 @@
   function openAbout() { if (!aboutDlg.open) { if (aboutDlg.showModal) aboutDlg.showModal(); else aboutDlg.setAttribute('open', ''); } }
   function closeAbout() { if (aboutDlg.close) aboutDlg.close(); else aboutDlg.removeAttribute('open'); if (location.hash === '#about') setHash(''); }
   $('aboutbtn').onclick = () => { openAbout(); setHash('about'); };
+  $('aboutTour').onclick = () => { closeAbout(); setTimeout(() => window.startTour && window.startTour(), 250); };
   $('aboutClose').onclick = closeAbout;
   aboutDlg.addEventListener('click', e => { if (e.target !== aboutDlg) return; const r = aboutDlg.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeAbout(); });   // click on the backdrop
   aboutDlg.addEventListener('close', () => { if (location.hash === '#about') setHash(''); });

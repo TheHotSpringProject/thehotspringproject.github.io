@@ -3,7 +3,7 @@
    - Map tiles you have viewed are kept (up to TILE_MAX) so recently seen areas still draw offline.
    - Wikipedia/Commons text and photos are cached after first view.
    - Google Maps photos are never cached (Google's terms); they simply don't show offline. */
-const VERSION = 'wt-v106';
+const VERSION = 'wt-v107';
 const SHELL = 'shell-' + VERSION;
 const TILES = 'tiles-v2';
 const WIKI = 'wiki-v2';
@@ -12,7 +12,7 @@ const WIKI_MAX = 600;
 const SAVED = 'offline-v1';
 
 const PRECACHE = [
-  './', 'index.html', 'privacy.html', 'style.css', 'app.js', 'config.js', 'manifest.webmanifest',
+  './', 'index.html', 'privacy.html', 'style.css', 'app.js', 'guide.js', 'config.js', 'manifest.webmanifest',
   'data/springs.json', 'data/media.json',
   'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css', 'vendor/markercluster/leaflet.markercluster.js', 'vendor/markercluster/MarkerCluster.css',
   'assets/logo-96.png?v=4', 'assets/logo-192.png?v=4', 'assets/logo-512.png?v=4', 'assets/fav-32.png?v=5', 'favicon.ico?v=5', 'assets/touch-180.png?v=5',
