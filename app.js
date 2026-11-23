@@ -463,7 +463,7 @@
     const grid = $('dgrid'); if (!grid || discShown >= discList.length) { if ($('dmore')) $('dmore').hidden = true; return; }
     const d = discList[discShown++], dist = distMi(d);
     const c = document.createElement('button'); c.type = 'button'; c.className = 'dcard ld';
-    const meta = [NAMES[d.st] || d.st, dist != null ? Math.round(dist).toLocaleString() + ' mi' : '', d.f != null ? (unit === 'F' ? d.f + '°F' : d.c + '°C') : ''].filter(Boolean).join(' · ');
+    const meta = [dist != null ? Math.round(dist).toLocaleString() + ' mi' : '', d.f != null ? (unit === 'F' ? d.f + '°F' : d.c + '°C') : ''].filter(Boolean).join(' · ');
     c.innerHTML = '<span class="dimg"><img alt=""></span><span class="dn"></span><span class="dm"></span>' + (d.known ? '<span class="dsoak">' + (d.rec[0] === 'D' ? 'Commercial' : 'Wild') + '</span>' : '');
     c.querySelector('.dn').textContent = title(d.name); c.querySelector('.dm').textContent = meta;
     c.onclick = () => {   // fly there and open the full details (the "More" view); closing them comes back here
