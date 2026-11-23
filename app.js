@@ -531,6 +531,15 @@
     head.className = 'dhead'; body.className = 'dbody';
     while (det.firstChild) body.appendChild(det.firstChild);
     head.append(body.querySelector('h2'), body.querySelector('.x')); det.append(head, body); det.scrollTop = 0;
+    // Reference rows (other readings, land, survey location, USGS quad, sources) go in a collapsed section at the bottom.
+    const MORE = /^(Newer reading|Other reading|Land|Location|USGS quadrangle|Listed in)$/;
+    const rows = [...body.querySelectorAll('table:first-of-type tr')].filter(tr => MORE.test(tr.cells[0].textContent.trim()));
+    if (rows.length) {
+      const dd = document.createElement('details'); dd.className = 'moreinfo';
+      dd.innerHTML = '<summary>Detailed information</summary><table></table>';
+      rows.forEach(tr => dd.querySelector('table').appendChild(tr));
+      body.appendChild(dd);
+    }
     det.querySelector('.mybtn.sav').onclick = () => toggleMine(d, 'sav');
     det.querySelector('.mybtn.vis').onclick = () => toggleMine(d, 'vis');
     if (MEDIA[d.i]) loadAbout(d);
