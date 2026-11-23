@@ -250,7 +250,7 @@
         d.m = GROUP ? d.hit : L.featureGroup([d.hit, d.ic]);
       } else d.m = L.circleMarker([d.lat, d.lon], {renderer, radius:5, weight:1, color:'#000', opacity:.55, fillColor:colorOf(d), fillOpacity:.95});
       if (canHover) d.m.bindTooltip(() => esc(title(d.name)) + ' · ' + fmt(d), {direction:'top', offset:[0,-4]});
-      d.m.on('click', e => { const t = pickTapped(d, e); select(t, false); showDetail(t); });   // a tap on the map opens the full details
+      d.m.on('click', e => select(pickTapped(d, e), false));   // a tap on the map opens the full details
       d.m._d = d;
     });
     if (GROUP) setupCluster();
@@ -461,11 +461,11 @@
   let discList = [], discShown = 0, discBack = null;
   function backToDiscover() {
     const det = $('detail'), b = discBack; discBack = null;
-    det.innerHTML = ''; det.appendChild(b.keep); det.style.display = 'block';
+    det.innerHTML = ''; det.appendChild(b.keep); det.style.display = 'block'; det.dataset.i = '';
     requestAnimationFrame(() => { det.scrollTop = b.scroll; });
   }
   function openDiscover() {
-    discBack = null;
+    discBack = null; $('detail').dataset.i = '';
     const det = $('detail'); det.style.display = 'block';
     det.innerHTML = '<div class="dhead"><h2>Discover springs</h2><button class="x" title="Close">✕</button></div>' +
       '<div class="dbody"><div class="dsub" id="dsub">Finding springs near you…</div><div class="dgrid" id="dgrid"></div>' +
@@ -503,7 +503,7 @@
       const det = $('detail'), keep = document.createDocumentFragment(), scroll = det.scrollTop;
       while (det.firstChild) keep.appendChild(det.firstChild);
       discBack = {keep, scroll};
-      goTo(d); showDetail(d);
+      goTo(d);
     };
     grid.appendChild(c);
     getMedia(d.i).then(m => {
@@ -537,7 +537,7 @@
   }
 
   function showDetail(d) {
-    const det = $('detail'); det.style.display = 'block';
+    const det = $('detail'); det.style.display = 'block'; det.dataset.i = d.i;
     const lat = Math.abs(d.lat).toFixed(3) + '°' + (d.lat >= 0 ? 'N' : 'S'), lon = Math.abs(d.lon).toFixed(3) + '°' + (d.lon < 0 ? 'W' : 'E');
     const dist = distMi(d);
     det.innerHTML = '<button class="x" title="Close">✕</button><h2>' + esc(title(d.name)) + '</h2>' +
@@ -628,25 +628,17 @@
     // On wider screens the panel floats over the left of the map: keep the spring and its popup clear of it.
     const panelW = () => { const a = document.querySelector('aside'); return (window.innerWidth > 760 && !app.classList.contains('max') && a) ? a.getBoundingClientRect().right - $('mapwrap').getBoundingClientRect().left : 0; };
     const pw = panelW();
-    const open = () => {
-      const p = L.popup({offset:[0,-4], autoPan:true, autoPanPaddingTopLeft:[pw + 16, 70], autoPanPaddingBottomRight:[16, 16], closeButton:true, minWidth:230, maxWidth:300});
-      p._springI = d.i;
-      p.setLatLng([d.lat, d.lon]).setContent(popupHtml(d)).openOn(map);
-      const el = p.getElement(); if (!el) return;
-      el.querySelector('.pb.sav').onclick = () => toggleMine(d, 'sav');
-      el.querySelector('.pb.vis').onclick = () => toggleMine(d, 'vis');
-      el.querySelector('.pb.more').onclick = () => showDetail(d);
-    };
+    // No small popup card any more: a spring always opens its full details.
+    const det = $('detail');
+    if (det.style.display !== 'block' || det.dataset.i !== String(d.i)) showDetail(d);
     if (fly) {
       const z = Math.max(map.getZoom(), 11);
       const target = pw ? map.unproject(map.project([d.lat, d.lon], z).subtract([pw / 2, 0]), z) : L.latLng(d.lat, d.lon);
-      map.once('moveend', open); map.flyTo(target, z, {duration:.8});
-    } else open();
+      map.flyTo(target, z, {duration:.8});
+    }
     setHash('spring-' + d.i);
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('detail').style.display === 'block' && !document.querySelector('dialog[open]')) $('detail').querySelector('.x').click(); });
-  // Closing a spring's popup (without the full panel open) clears the selection.
-  map.on('popupclose', e => { if (sel && e.popup._springI === sel.i && $('detail').style.display !== 'block') deselect(); });
 
   // ---------- Description & photo (Wikipedia / Wikimedia Commons) ----------
   const mediaCache = {};
