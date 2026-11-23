@@ -33,6 +33,13 @@ while True:
     if 'continue' not in j: break
     cont = j['continue']
 print('files found', len(titles))
+# Commons' search index can lag behind new uploads by a day or more, so photos already listed are kept (and rechecked)
+# even when the search misses them; ones deleted from Commons drop out below.
+try:
+    prev = json.load(open('data/submitted.json')).get('s', {})
+except Exception:
+    prev = {}
+titles = sorted(set(titles) | {r['file'] for r in prev.values()})
 
 out = {}
 for k in range(0, len(titles), 50):
