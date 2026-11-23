@@ -180,8 +180,8 @@
   // Curated Wikipedia/Commons links, plus Commons photos geotagged at each spring (data/photos.json) for springs
   // without a curated photo.
   const mediaReady = Promise.all([
-    fetch('data/media.json?v=4').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
-    fetch('data/photos.json?v=2').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
+    fetch('data/media.json?v=5').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
+    fetch('data/photos.json?v=3').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
     fetch('data/submitted.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}}))
   ]).then(([j, ph, sub]) => {
     MEDIA = j.m || {};
@@ -195,7 +195,7 @@
   // Grouping crowded springs into numbered bubbles: preview only for now (?world or ?group)
   const GROUP = (WORLD || new URLSearchParams(location.search).has('group')) && !new URLSearchParams(location.search).has('nogroup') && !!L.markerClusterGroup;
   let cluster = null;
-  const worldReady = WORLD ? fetch('data/springs-world.json?v=1').then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
+  const worldReady = WORLD ? fetch('data/springs-world.json?v=2').then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
   Promise.all([fetch('data/springs.json?v=8').then(r => r.json()), mediaReady, recReady, worldReady]).then(([j, , , w]) => init(j, w)).catch(err => {
     alertMsg('Could not load spring data (' + err + ').');
   });
