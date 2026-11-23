@@ -338,3 +338,12 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 #detail tr.nolab td{padding:3px 0}
 #detail .ib .ibl{font-size:10px;line-height:1;font-weight:600;letter-spacing:.01em}
 #detail .ivis.on .ibl{color:#fff}
+
+/* Step to nearby springs (arrows in the details header; swipe on phones) */
+#detail .nearnav{display:flex;gap:4px;flex:none}
+#detail .nn{width:30px;height:30px;border:1px solid #c9d1da;border-radius:8px;background:#fff;color:var(--navy);font-size:20px;line-height:1;cursor:pointer;padding:0 0 2px}
+#detail .nn:disabled{opacity:.35;cursor:default}
+#detail.swl .dbody{animation:swl .22s ease-out}
+#detail.swr .dbody{animation:swr .22s ease-out}
+@keyframes swl{from{transform:translateX(40px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes swr{from{transform:translateX(-40px);opacity:.3}to{transform:none;opacity:1}}

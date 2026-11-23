@@ -565,6 +565,16 @@
     head.className = 'dhead'; body.className = 'dbody';
     while (det.firstChild) body.appendChild(det.firstChild);
     head.append(body.querySelector('h2'), body.querySelector('.x')); det.append(head, body); det.scrollTop = 0;
+    // Nearby springs: swipe left/right (or the arrows) to step through the closest shown springs
+    if (!nearSwipe || !nearSeq || nearSeq.ids[nearSeq.pos] !== d.i) nearSeq = null;
+    nearSwipe = false;
+    const nav = document.createElement('div'); nav.className = 'nearnav';
+    nav.innerHTML = '<button type="button" class="nn prev" title="Previous nearby spring" aria-label="Previous nearby spring">‹</button>' +
+      '<button type="button" class="nn next" title="Next nearby spring" aria-label="Next nearby spring">›</button>';
+    head.insertBefore(nav, head.querySelector('.x'));
+    nav.querySelector('.prev').onclick = () => stepNear(d, -1);
+    nav.querySelector('.next').onclick = () => stepNear(d, 1);
+    nav.querySelector('.prev').disabled = !nearSeq || nearSeq.pos === 0;
     // Reference rows (other readings, land, survey location, USGS quad, sources) go in a collapsed section at the bottom.
     const MORE = /^(State|Province or territory|Country|Region|Local name|Latitude, longitude|Newer reading|Other reading|Land|Location|USGS quadrangle|Listed in)$/;
     const mainT = body.querySelector('table');
@@ -623,6 +633,37 @@
       if (discBack) { backToDiscover(); return; }   // opened from Discover: go back to the cards, where you were
       deselect();
     };
+  }
+  // ---------- Step to nearby springs ----------
+  let nearSeq = null, nearSwipe = false;
+  function stepNear(d, dir) {
+    if (!nearSeq) {   // the shown springs (current filters) nearest to where the stepping started
+      const pool = S.filter(x => x === d || passes(x));
+      const km = x => kmBetween(d.lat, d.lon, x.lat, x.lon);
+      nearSeq = {ids: pool.sort((a, b) => km(a) - km(b)).slice(0, 60).map(x => x.i), pos: 0};
+    }
+    const np = nearSeq.pos + dir;
+    if (np < 0 || np >= nearSeq.ids.length) return;
+    nearSeq.pos = np; nearSwipe = true;
+    const det = $('detail');
+    det.classList.remove('swl', 'swr'); void det.offsetWidth; det.classList.add(dir > 0 ? 'swl' : 'swr');
+    select(S[nearSeq.ids[np]], true);
+  }
+  {
+    const det = $('detail'); let x0 = null, y0 = 0, t0 = 0;
+    det.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1 || !det.querySelector('.nearnav')) { x0 = null; return; }
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    }, {passive: true});
+    det.addEventListener('touchend', e => {
+      if (x0 == null || !sel) return;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > 1.6 * Math.abs(dy) && Date.now() - t0 < 800) stepNear(sel, dx < 0 ? 1 : -1);
+    }, {passive: true});
+    document.addEventListener('keydown', e => {
+      if (det.style.display !== 'block' || !sel || !det.querySelector('.nearnav') || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      if (e.key === 'ArrowRight') stepNear(sel, 1); else if (e.key === 'ArrowLeft') stepNear(sel, -1);
+    });
   }
   function deselect() { sel = null; discBack = null; $('detail').style.display = 'none'; restyle(); list.querySelectorAll('.it.sel').forEach(e => e.classList.remove('sel')); setHash(''); }
   function openPop(d, fly) {
