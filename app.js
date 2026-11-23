@@ -205,7 +205,7 @@
   });
 
   let SS_SRC = [], REC = {};
-  const REC_LABEL = {D:'Known soaking spot · commercial', W:'Known soaking spot · wild', P:'Possibly used', N:'Unlikely or not allowed', U:'No evidence found'};
+  const REC_LABEL = {D:'Known soaking spot · commercial', W:'Known soaking spot · wild', P:'Possibly used for soaking', N:'Soaking unlikely or not allowed', U:'No soaking evidence found'};
   const recKey = d => d.lat.toFixed(3) + ',' + d.lon.toFixed(3);
   // Known soaking spots get a symbol: a house for commercial, the hot-spring sign for wild.
   const GLYPH = {
