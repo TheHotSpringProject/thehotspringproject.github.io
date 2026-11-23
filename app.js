@@ -534,7 +534,9 @@
     det.querySelector('.mybtn.sav').onclick = () => toggleMine(d, 'sav');
     det.querySelector('.mybtn.vis').onclick = () => toggleMine(d, 'vis');
     if (MEDIA[d.i]) loadAbout(d);
-    loadGooglePhoto(d);
+    // Google's photo only when there is no Wikipedia/Commons photo (it also saves a paid lookup)
+    if (MEDIA[d.i] && MEDIA[d.i][1]) getMedia(d.i).then(m => { if (!m.photo) loadGooglePhoto(d); }).catch(() => loadGooglePhoto(d));
+    else loadGooglePhoto(d);
     det.querySelector('.x').onclick = () => {
       if (discBack) { backToDiscover(); return; }   // opened from Discover: go back to the cards, where you were
       det.style.display = 'none'; if (!map._popup || !map.hasLayer(map._popup)) deselect();
