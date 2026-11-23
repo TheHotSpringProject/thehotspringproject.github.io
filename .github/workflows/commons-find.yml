@@ -1,0 +1,15 @@
+name: Find Commons photos for a spring
+on:
+  workflow_dispatch:
+    inputs:
+      name: {description: 'Spring name', required: true}
+      lat: {description: 'Latitude', required: true}
+      lon: {description: 'Longitude', required: true}
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python tools/commons_find.py "${{ inputs.name }}" "${{ inputs.lat }}" "${{ inputs.lon }}"
