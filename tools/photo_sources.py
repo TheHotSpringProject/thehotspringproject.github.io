@@ -59,17 +59,20 @@ def good_files(titles, near=None):
     out = []
     titles = [t for t in titles if re.search(r'\.(jpe?g|png)$', t, re.I) and not BAD.search(t)]
     for k in range(0, len(titles), 50):
-        j = api({'action': 'query', 'titles': '|'.join(titles[k:k + 50]), 'prop': 'imageinfo|coordinates',
-                 'iiprop': 'size|mime|extmetadata', 'iiextmetadatafilter': 'LicenseShortName'})
+        j = api({'action': 'query', 'titles': '|'.join(titles[k:k + 50]), 'prop': 'imageinfo|coordinates', 'coprimary': 'all',
+                 'iiprop': 'size|mime|extmetadata', 'iiextmetadatafilter': 'LicenseShortName|GPSLatitude|GPSLongitude'})
         pages = {p['title']: p for p in (j.get('query') or {}).get('pages', [])}
         for t in titles[k:k + 50]:
             p = pages.get(t); ii = p and p.get('imageinfo') and p['imageinfo'][0]
             if not ii or ii.get('width', 0) < 800 or ii.get('mime') not in ('image/jpeg', 'image/png'): continue
             lic = ((ii.get('extmetadata') or {}).get('LicenseShortName') or {}).get('value', '')
             if not FREE.search(lic) or NOTFREE.search(lic): continue
-            if near and p.get('coordinates'):
-                c = p['coordinates'][0]
-                if km(near[0], near[1], c['lat'], c['lon']) > 25: continue
+            if near:   # every location on the file (camera, object, EXIF GPS) must be within 10 km; no location at all is rejected too
+                md = ii.get('extmetadata') or {}
+                pts = [(c['lat'], c['lon']) for c in p.get('coordinates', [])]
+                try: pts.append((float(md['GPSLatitude']['value']), float(md['GPSLongitude']['value'])))
+                except Exception: pass
+                if not pts or min(km(near[0], near[1], a, b) for a, b in pts) > 10: continue
             out.append(t)
     return out
 
