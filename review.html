@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Photo review · The Hot Spring Project</title>
+<link rel="icon" href="assets/fav-32.png?v=5">
+<style>
+  :root{--navy:#1d3d5c;--ink:#1f2a33;--muted:#68737d;--line:#d9dee3;--bg:#f8f6f0;--go:#2e7d4f;--no:#b23b2e}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.4 Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
+  header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;gap:10px}
+  header h1{font-size:15px;margin:0;color:var(--navy);flex:1}
+  .prog{font-size:12px;color:var(--muted);white-space:nowrap}
+  .tb{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;color:var(--navy);cursor:pointer}
+  main{max-width:920px;margin:0 auto;padding:12px 12px 120px}
+  .site h2{margin:2px 0 2px;font-size:20px;color:var(--navy)}
+  .meta{color:var(--muted);font-size:13px}
+  .meta a{color:var(--navy)}
+  .soak{display:inline-block;background:#e6eef7;color:var(--navy);font-weight:600;font-size:12px;border-radius:10px;padding:1px 8px;margin-right:6px}
+  .hint{font-size:12.5px;color:var(--muted);margin:10px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .c{position:relative;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .c img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#e7e4d8}
+  .c .cap{font-size:11px;color:var(--muted);padding:5px 7px 7px;line-height:1.3}
+  .c.sel{border-color:var(--go)}
+  .c .n{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.9);border:2px solid #fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .c:not(.sel) .n{background:rgba(0,0,0,.25)}
+  .c.sel .n{background:var(--go)}
+  .c .curb{position:absolute;top:6px;left:6px;background:rgba(20,30,40,.78);color:#fff;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:9px}
+  .c .zoom{position:absolute;bottom:52px;right:6px;background:rgba(255,255,255,.92);border-radius:6px;padding:2px 6px;font-size:12px;color:var(--navy);text-decoration:none}
+  footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:5}
+  footer button{flex:1;max-width:220px;border-radius:10px;padding:11px 8px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+  .go{background:var(--go);color:#fff;border:1px solid var(--go)}
+  .go:disabled{opacity:.45;cursor:default}
+  .no{background:#fff;color:var(--no);border:1px solid #e0b4ae}
+  .sk{background:#fff;color:var(--navy);border:1px solid var(--line);max-width:110px!important}
+  .done{color:var(--go);font-weight:600;font-size:13px;margin-top:4px}
+  dialog{border:0;border-radius:12px;max-width:560px;width:calc(100% - 24px);padding:16px}
+  dialog textarea{width:100%;height:160px;font:12px/1.35 ui-monospace,monospace}
+  dialog .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  select{font:inherit;font-size:13px;padding:5px;border-radius:8px;border:1px solid var(--line)}
+  .empty{padding:40px 0;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Photo review</h1>
+  <span class="prog" id="prog"></span>
+  <button class="tb" id="back" title="Previous spring">‹ Back</button>
+  <button class="tb" id="menu">Picks</button>
+</header>
+<main id="main"><div class="empty">Loading candidate photos…</div></main>
+<footer>
+  <button class="no" id="none">None of these</button>
+  <button class="sk" id="skip">Skip</button>
+  <button class="go" id="save" disabled>Use selected</button>
+</footer>
+<dialog id="dlg">
+  <b>Your picks</b>
+  <div class="meta" id="dsum"></div>
+  <div class="row">
+    <label>Show: <select id="flt">
+      <option value="todo">Not reviewed yet</option>
+      <option value="all">All springs</option>
+      <option value="done">Reviewed</option>
+    </select></label>
+    <label>Group: <select id="grp">
+      <option value="">All</option>
+      <option value="D">Commercial soaks</option>
+      <option value="W">Wild soaks</option>
+      <option value="P">Possibly used for soaking</option>
+      <option value="X">Others with a photo</option>
+    </select></label>
+  </div>
+  <p class="hint">Picks are saved on this device. When you're done (or anytime), tap Copy and paste the text into the chat with Claude.</p>
+  <textarea id="out" readonly></textarea>
+  <div class="row">
+    <button class="tb" id="copy">Copy picks</button>
+    <button class="tb" id="close">Close</button>
+  </div>
+</dialog>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SOAK = {D:'Commercial soak', W:'Wild soak', P:'Possibly used for soaking', N:'Soaking unlikely or not allowed', U:'No soaking evidence found', '':'No soaking estimate'};
+  const KEY = 'wt-review-v1';
+  let picks = {}; try { picks = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+  let order = []; try { order = JSON.parse(localStorage.getItem(KEY + '-order') || '[]'); } catch (e) {}   // springs in the order reviewed
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(picks)); localStorage.setItem(KEY + '-order', JSON.stringify(order)); } catch (e) {} };
+  const mark = i => { order = order.filter(x => x !== i); order.push(i); };
+  let all = [], list = [], pos = 0, sel = [], history = [];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+  const title = s => s.replace(/\b([A-Z])([A-Z]+)\b/g, (m, a, b) => a + b.toLowerCase());
+
+  function rebuild(keepI) {
+    const f = $('flt').value, g = $('grp').value;
+    list = all.filter(x => (f === 'all' || (f === 'todo') === !(String(x.i) in picks)) &&
+      (!g || (g === 'X' ? !'DWP'.includes(x.soak || '-') : x.soak === g)));
+    pos = Math.max(0, keepI != null ? list.findIndex(x => x.i === keepI) : 0);
+    if (pos < 0) pos = 0;
+    show();
+  }
+  function show() {
+    const reviewed = Object.keys(picks).length;
+    $('prog').textContent = reviewed + ' of ' + all.length + ' reviewed';
+    const x = list[pos];
+    if (!x) { $('main').innerHTML = '<div class="empty">Nothing left in this view. Tap “Picks” to copy them, or change what is shown.</div>'; return; }
+    const prev = picks[String(x.i)];
+    sel = prev && prev.length ? prev.slice() : [];
+    $('main').innerHTML = '<div class="site"><h2>' + esc(title(x.name)) + '</h2><div class="meta"><span class="soak">' + SOAK[x.soak] + '</span>' + esc(x.st) +
+      ' · <a href="./#spring-' + x.i + '" target="_blank" rel="noopener">open in app</a> · <a href="https://www.google.com/maps/search/?api=1&query=' + x.lat + ',' + x.lon + '" target="_blank" rel="noopener">map</a>' +
+      ' · ' + (pos + 1) + ' of ' + list.length + ' here</div>' +
+      (prev ? '<div class="done">' + (prev.length ? '✓ Reviewed: ' + prev.length + ' picked' : '✓ Reviewed: none of these') + '</div>' : '') + '</div>' +
+      '<p class="hint">Tap the photos to feature, in order of preference (the first is the main photo). Tap again to unselect.</p>' +
+      '<div class="grid">' + x.c.map((c, k) => '<div class="c" data-k="' + k + '"><img loading="lazy" alt="" src="' + esc(c.u) + '">' +
+        (c.cur ? '<span class="curb">Current</span>' : '') + '<span class="n"></span>' +
+        '<a class="zoom" target="_blank" rel="noopener" href="https://commons.wikimedia.org/wiki/' + encodeURIComponent(c.f.replace(/ /g, '_')) + '" title="Open on Commons">⤢</a>' +
+        '<div class="cap">' + (c.d >= 0 ? (c.d < 1 ? Math.round(c.d * 1000) + ' m away' : c.d + ' km away') : 'no location') + ' · ' + esc(c.by || 'unknown') + ' · ' + esc(c.lic) + '</div></div>').join('') + '</div>';
+    $('main').querySelectorAll('.c').forEach(el => {
+      el.addEventListener('click', ev => {
+        if (ev.target.closest('.zoom')) return;
+        const f = x.c[+el.dataset.k].f, at = sel.indexOf(f);
+        at >= 0 ? sel.splice(at, 1) : sel.push(f);
+        paint();
+      });
+    });
+    paint(); window.scrollTo(0, 0);
+  }
+  function paint() {
+    const x = list[pos]; if (!x) return;
+    $('main').querySelectorAll('.c').forEach(el => {
+      const at = sel.indexOf(x.c[+el.dataset.k].f);
+      el.classList.toggle('sel', at >= 0); el.querySelector('.n').textContent = at >= 0 ? at + 1 : '';
+    });
+    $('save').disabled = !sel.length;
+    $('save').textContent = sel.length ? 'Use selected (' + sel.length + ')' : 'Use selected';
+  }
+  function next() { history.push(pos); if ($('flt').value === 'todo') { list.splice(pos, 1); } else pos++; show(); }
+  $('save').onclick = () => { const x = list[pos]; if (!x || !sel.length) return; picks[String(x.i)] = sel.slice(); mark(x.i); save(); next(); };
+  $('none').onclick = () => { const x = list[pos]; if (!x) return; picks[String(x.i)] = []; mark(x.i); save(); next(); };
+  $('skip').onclick = () => { if (pos < list.length - 1) { history.push(pos); pos++; show(); } };
+  $('back').onclick = () => {
+    if ($('flt').value === 'todo') {   // step back to the spring reviewed last
+      const last = order[order.length - 1]; if (last == null) return;
+      $('flt').value = 'all'; rebuild(+last); return;
+    }
+    if (pos > 0) { pos--; show(); }
+  };
+  function compact() {
+    const lines = Object.entries(picks).map(([i, fs]) => i + ':' + (fs.length ? fs.map(f => f.replace(/^File:/, '')).join('|') : '-'));
+    return 'PHOTO PICKS v1\n' + lines.join('\n');
+  }
+  $('menu').onclick = () => {
+    const n = Object.keys(picks).length, none = Object.values(picks).filter(v => !v.length).length;
+    $('dsum').textContent = n + ' springs reviewed: ' + (n - none) + ' with photos picked, ' + none + ' with none.';
+    $('out').value = compact(); $('dlg').showModal();
+  };
+  $('close').onclick = () => $('dlg').close();
+  $('copy').onclick = async () => {
+    try { await navigator.clipboard.writeText($('out').value); $('copy').textContent = 'Copied ✓'; }
+    catch (e) { $('out').focus(); $('out').select(); $('copy').textContent = 'Select all and copy'; }
+    setTimeout(() => $('copy').textContent = 'Copy picks', 2500);
+  };
+  $('flt').onchange = $('grp').onchange = () => { const x = list[pos]; rebuild(x && x.i); };
+  fetch('data/photo_candidates.json', {cache: 'no-cache'}).then(r => r.json()).then(j => { all = j; rebuild(); })
+    .catch(() => { $('main').innerHTML = '<div class="empty">Couldn’t load the candidate photos. Check your connection and reload.</div>'; });
+})();
+</script>
+</body>
+</html>

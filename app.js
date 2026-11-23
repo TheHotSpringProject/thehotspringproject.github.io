@@ -186,12 +186,17 @@
   const mediaReady = Promise.all([
     fetch('data/media.json?v=5').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
     fetch('data/photos.json?v=3').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
-    fetch('data/submitted.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}}))
-  ]).then(([j, ph, sub]) => {
+    fetch('data/submitted.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}})),
+    fetch('data/picks.json', {cache:'no-cache'}).then(r => r.ok ? r.json() : {s:{}}).catch(() => ({s:{}}))
+  ]).then(([j, ph, sub, pk]) => {
     MEDIA = j.m || {};
     // photos shared through the app come first, then curated ones, then automatic matches
     Object.entries(sub.s || {}).forEach(([i, r]) => { MEDIA[i] = [(MEDIA[i] || [''])[0], r.file]; });
+    // hand-picked in review.html: the first pick is the photo shown; an empty list means none of the Commons photos
+    const picked = pk.s || {};
+    Object.entries(picked).forEach(([i, fs]) => { if (fs.length) MEDIA[i] = [(MEDIA[i] || [''])[0], fs[0]]; });
     Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
+    Object.entries(picked).forEach(([i, fs]) => { if (!fs.length && MEDIA[i]) MEDIA[i] = [MEDIA[i][0], '']; });
   });
   const recReady = fetch('data/recreation.json?v=7').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
   // Worldwide springs (OpenStreetMap + Wikidata): preview only, with ?world in the address
