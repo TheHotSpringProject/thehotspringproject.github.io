@@ -70,6 +70,8 @@
   const I_CHECK = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M7.8 12.3l2.8 2.8 5.6-5.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const I_MAP = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.2l5.3-2 6.4 2.2 5.3-2v13.6l-5.3 2-6.4-2.2-5.3 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 4.2v13.6M15.2 6.4V20" stroke="currentColor" stroke-width="1.8"/></svg>';
   const I_CAMPLUS = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8.5h3l1.8-2.7h5.4l1.8 2.7h1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3.5 8.5v10a1 1 0 0 0 1 1h12.5a1 1 0 0 0 1-1v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="10.6" cy="13.6" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.5 3.5v7M16 7h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const I_SEARCH = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  const I_NEARME = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L3 10.5l7.5 3 3 7.5z" fill="currentColor"/></svg>';
   const ESRI_ATTR = 'Tiles &copy; Esri and contributors';
   const USGS_ATTR = 'Tiles: <a href="https://www.usgs.gov/programs/national-geospatial-program/national-map" target="_blank" rel="noopener">USGS The National Map</a>';
   const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
@@ -469,33 +471,59 @@
     discBack = null; $('detail').dataset.i = '';
     const det = $('detail'); det.style.display = 'block';
     det.innerHTML = '<div class="dhead"><h2>Discover springs</h2><button class="x" title="Close">✕</button></div>' +
-      '<div class="dbody"><div class="dsub" id="dsub">Finding springs near you…</div><div class="dgrid" id="dgrid"></div>' +
+      '<div class="dbody"><form class="dfind" id="dfind" autocomplete="off"><input type="search" id="dq" placeholder="Search near a town, address or place" aria-label="Search near a place" enterkeyhint="search">' +
+      '<button type="submit" class="dgo" aria-label="Search">' + I_SEARCH + '</button><button type="button" class="dme" id="dme" title="Use my location">' + I_NEARME + '<span>Near me</span></button></form>' +
+      '<div class="dsub" id="dsub">Finding springs near you…</div><div class="dgrid" id="dgrid"></div>' +
       '<div class="dmore"><button class="mybtn" id="dmore" hidden>Show more</button><button class="mybtn" id="dshuf" hidden>Shuffle</button></div>' +
-      '<div class="srccite">Photos: Wikimedia Commons. Each spring\'s details credit the photographer and licence. Have a photo of a spring? Open it and tap “Add your photo”.</div></div>';
+      '<div class="srccite">Photos: Wikimedia Commons. Each spring\'s details credit the photographer and licence. Have a photo of a spring? Open it and tap “Add your photo”. Place search © OpenStreetMap contributors (Nominatim).</div></div>';
     det.scrollTop = 0;
     det.querySelector('.x').onclick = () => { det.style.display = 'none'; };
     $('dmore').onclick = () => discMore();
     $('dshuf').onclick = () => discStart(false);
-    if (me) discStart(true);
-    else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { gotMe(p); update(); discStart(true); }, () => discStart(false), {enableHighAccuracy:false, timeout:8000, maximumAge:600000});
-    else discStart(false);
+    $('dme').onclick = () => discNearMe(true);
+    $('dfind').onsubmit = e => { e.preventDefault(); discSearch($('dq').value.trim()); };
+    discNearMe(false);
   }
+  // Springs near you: ask for your location; without it, fall back to a random set (or say why, if you asked)
+  function discNearMe(asked) {
+    if (me) { discOrigin = null; discStart(true); return; }
+    if (!navigator.geolocation) { if (asked) $('dsub').textContent = 'This device can\'t share its location. Search for a place instead.'; else discStart(false); return; }
+    $('dsub').textContent = 'Finding springs near you…';
+    navigator.geolocation.getCurrentPosition(p => { gotMe(p); update(); discOrigin = null; discStart(true); },
+      () => { if (asked) $('dsub').textContent = 'Location is off or unavailable. Allow it for this app, or search for a place.'; else discStart(false); },
+      {enableHighAccuracy:false, timeout:8000, maximumAge:600000});
+  }
+  // Place finder: OpenStreetMap's Nominatim geocoder (free; one search per submit)
+  async function discSearch(q) {
+    if (!q) return;
+    $('dsub').textContent = 'Looking up ' + q + '…';
+    try {
+      const cc = WORLD ? '' : '&countrycodes=us,ca';
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=0' + cc + '&q=' + encodeURIComponent(q), {headers: {'Accept-Language': 'en'}});
+      const j = await r.json();
+      if (!j.length) { $('dsub').textContent = 'No place found for “' + q + '”. Try a town name or a full address.'; return; }
+      discOrigin = {lat: +j[0].lat, lon: +j[0].lon, label: j[0].display_name.split(',').slice(0, 2).join(',')};
+      discStart(true);
+    } catch (e) { $('dsub').textContent = navigator.onLine ? 'Place search isn\'t responding. Try again in a moment.' : 'Place search needs a connection.'; }
+  }
+  let discOrigin = null;
+  const discDist = d => discOrigin ? kmBetween(discOrigin.lat, discOrigin.lon, d.lat, d.lon) * 0.621371 : distMi(d);
   function discStart(near) {
     const grid = $('dgrid'); if (!grid) return;
     const seenF = new Set();   // one card per photo, and only named springs
     discList = S.filter(d => MEDIA[d.i] && MEDIA[d.i][1] && !d.unnamed && !/^unnamed/i.test(d.name));
-    if (near) discList.sort((a, b) => distMi(a) - distMi(b));
+    if (near) discList.sort((a, b) => discDist(a) - discDist(b));
     else discList = discList.map(d => [Math.random() + (d.known ? 0.35 : 0), d]).sort((a, b) => b[0] - a[0]).map(x => x[1]);   // known soaks come up more often
     discList = discList.filter(d => !seenF.has(MEDIA[d.i][1]) && seenF.add(MEDIA[d.i][1]));
     discShown = 0; grid.innerHTML = '';
-    $('dsub').textContent = near ? 'The nearest springs with photos' : 'A random selection. Allow location to see springs near you.';
+    $('dsub').textContent = near ? (discOrigin ? 'Springs with photos nearest ' + discOrigin.label : 'The nearest springs with photos') : 'A random selection. Search for a place or tap Near me to see springs close by.';
     $('dshuf').hidden = near;
     discMore();
   }
   function discMore() { for (let k = 0; k < 12; k++) discAdd(); $('dmore').hidden = discShown >= discList.length; }
   function discAdd() {
     const grid = $('dgrid'); if (!grid || discShown >= discList.length) { if ($('dmore')) $('dmore').hidden = true; return; }
-    const d = discList[discShown++], dist = distMi(d);
+    const d = discList[discShown++], dist = discDist(d);
     const c = document.createElement('button'); c.type = 'button'; c.className = 'dcard ld';
     const meta = [dist != null ? Math.round(dist).toLocaleString() + ' mi' : '', d.f != null ? (unit === 'F' ? d.f + '°F' : d.c + '°C') : ''].filter(Boolean).join(' · ');
     c.innerHTML = '<span class="dimg"><img alt=""></span><span class="dn"></span><span class="dm"></span>' + (d.known ? '<span class="dsoak">' + (d.rec[0] === 'D' ? 'Commercial' : 'Wild') + '</span>' : '');
