@@ -1,0 +1,18 @@
+[
+ {
+  "name": "Kelly Hot Springs (Table Rock)",
+  "st": "ID",
+  "lat": 43.6025,
+  "lon": -116.1575,
+  "f": 180,
+  "c": 82,
+  "note": "Natural hot springs at the base of Table Rock, a permanent camp of the Shoshone, Bannock and Paiute peoples and later Kelly's Hot Springs resort. Wells were drilled over the springs in 1890-91; their 180°F water filled the Boise Natatorium (1892-1934) and became the world's first geothermal district heating system, which still heats homes on Warm Springs Avenue. The springs no longer flow at the surface and there is no public soaking.",
+  "temp": "well water, 1891",
+  "loc": "Location approximate (within about 500 m), at the Boise Warm Springs Water District wells",
+  "sources": [
+   "Idaho State Historical Society, Boise Natural Hot Water Heating System (Reference Series 500)",
+   "City of Boise, Warm Springs Avenue Historic District",
+   "Boise State University, Boise's geothermal history (180°F artesian wells, 1891)"
+  ]
+ }
+]

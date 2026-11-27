@@ -198,14 +198,14 @@
     Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
     Object.entries(picked).forEach(([i, fs]) => { if (!fs.length && MEDIA[i]) MEDIA[i] = [MEDIA[i][0], '']; });
   });
-  const recReady = fetch('data/recreation.json?v=7').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
+  const recReady = fetch('data/recreation.json?v=8').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
   // Worldwide springs (OpenStreetMap + Wikidata): preview only, with ?world in the address
   const WORLD = new URLSearchParams(location.search).has('world');
   // Grouping crowded springs into numbered bubbles: preview only for now (?world or ?group)
   const GROUP = (WORLD || new URLSearchParams(location.search).has('group')) && !new URLSearchParams(location.search).has('nogroup') && !!L.markerClusterGroup;
   let cluster = null;
   const worldReady = WORLD ? fetch('data/springs-world.json?v=2').then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null);
-  Promise.all([fetch('data/springs.json?v=8').then(r => r.json()), mediaReady, recReady, worldReady]).then(([j, , , w]) => init(j, w)).catch(err => {
+  Promise.all([fetch('data/springs.json?v=9').then(r => r.json()), mediaReady, recReady, worldReady]).then(([j, , , w]) => init(j, w)).catch(err => {
     alertMsg('Could not load spring data (' + err + ').');
   });
 
@@ -223,7 +223,7 @@
     return L.divIcon({className:'soakic', html:soakSvg(d.rec[0], colorOf(d), stroke, sw), iconSize:[px, px], iconAnchor:[px / 2, px / 2]});
   }
   function init(json, world) {
-    S = json.springs.map((r, i) => ({i, name:r[0] || 'Unnamed spring', unnamed:!r[0], st:r[1], lat:r[2], lon:r[3], f:r[4], c:r[5], cls:r[6], quad:(r[7] || '').replace(/^\(|\)$/g, ''), land:r[8] || null, ss:r[9] || null, moved:r[10] || null, added:r[11] === 'S' || r[11] === 'C', ca:r[11] === 'C', caSrc:r[12] || null}));
+    S = json.springs.map((r, i) => ({i, name:r[0] || 'Unnamed spring', unnamed:!r[0], st:r[1], lat:r[2], lon:r[3], f:r[4], c:r[5], cls:r[6], quad:(r[7] || '').replace(/^\(|\)$/g, ''), land:r[8] || null, ss:r[9] || null, moved:r[10] || null, added:r[11] === 'S' || r[11] === 'C' || r[11] === 'H', ca:r[11] === 'C', caSrc:r[11] === 'C' ? r[12] : null, hist:r[11] === 'H' ? r[12] : null}));
     SS_SRC = json.ss_sources || [];
     if (world) {
       Object.assign(NAMES, world.countries);
@@ -545,7 +545,8 @@
       '<div class="mybtns"><button class="mybtn sav' + (saved.has(d.i) ? ' on' : '') + '">' + (saved.has(d.i) ? '★ Saved' : '☆ Save') + '</button><button class="mybtn vis' + (visited.has(d.i) ? ' on' : '') + '">' + (visited.has(d.i) ? '✓ Visited' : 'Mark visited') + '</button></div><table>' +
       (d.world ? '<tr><td>Country</td><td>' + esc(NAMES[d.st] || d.st) + '</td></tr>' + (d.region ? '<tr><td>Region</td><td>' + esc(d.region) + '</td></tr>' : '') + (d.alt ? '<tr><td>Local name</td><td>' + esc(d.alt) + '</td></tr>' : '')
         : '<tr><td>' + (d.ca ? 'Province or territory' : 'State') + '</td><td>' + NAMES[d.st] + '</td></tr>') +
-      '<tr><td>Temperature</td><td>' + tempLong(d) + (d.world ? (d.f != null ? ' <span class="srcnote">(' + (d.wsrc.includes('O') ? 'OpenStreetMap' : 'Wikidata') + ')</span>' : '') : d.ca ? (d.ss ? ' <span class="srcnote">(' + esc((SS_SRC[d.ss[3]] || '').split(',')[0]) + ')</span>' : '') : d.ss && (d.added || d.noaaNoTemp) ? ' <span class="srcnote">(' + (d.ss[2] ? 'measured ' + d.ss[2] : 'date not recorded') + ')</span>' : d.f != null && !d.added ? ' <span class="srcnote">(NOAA 1980)</span>' : '') + '</td></tr>' +
+      (d.hist ? '<tr><td>History</td><td>' + esc(d.hist.note) + '</td></tr>' : '') +
+      '<tr><td>Temperature</td><td>' + tempLong(d) + (d.hist ? ' <span class="srcnote">(' + esc(d.hist.temp) + ')</span>' : d.world ? (d.f != null ? ' <span class="srcnote">(' + (d.wsrc.includes('O') ? 'OpenStreetMap' : 'Wikidata') + ')</span>' : '') : d.ca ? (d.ss ? ' <span class="srcnote">(' + esc((SS_SRC[d.ss[3]] || '').split(',')[0]) + ')</span>' : '') : d.ss && (d.added || d.noaaNoTemp) ? ' <span class="srcnote">(' + (d.ss[2] ? 'measured ' + d.ss[2] : 'date not recorded') + ')</span>' : d.f != null && !d.added ? ' <span class="srcnote">(NOAA 1980)</span>' : '') + '</td></tr>' +
       (d.ss && !d.added && !d.noaaNoTemp ? '<tr><td>' + (d.ss[2] && d.ss[2] > 1980 ? 'Newer reading' : 'Other reading') + '</td><td>' + (unit === 'F' ? d.ss[0] + '°F' : d.ss[1] + '°C') + (d.ss[2] ? ', measured ' + d.ss[2] : ', date not recorded') + '</td></tr>' : '') +
       '<tr><td>Class</td><td><span class="dot" style="background:' + colorOf(d) + ';vertical-align:-1px"></span> ' + LABEL[d.cls] + '</td></tr>' +
       '<tr><td>Latitude, longitude</td><td>' + lat + ', ' + lon + '</td></tr>' +
@@ -556,7 +557,8 @@
       (d.ca ? '<tr><td>Listed in</td><td>Canadian sources<div class="srccite">' + (d.caSrc || []).map(k => esc(SS_SRC[k] || '')).join('<br>') + '</div></td></tr>' : '') +
       (d.world ? '<tr><td>Listed in</td><td>' + [d.osm ? '<a href="https://www.openstreetmap.org/' + ({n:'node', w:'way', r:'relation'})[d.osm[0]] + '/' + d.osm.slice(1) + '" target="_blank" rel="noopener">OpenStreetMap</a>' : '', d.qid ? '<a href="https://www.wikidata.org/wiki/' + esc(d.qid) + '" target="_blank" rel="noopener">Wikidata</a>' : ''].filter(Boolean).join(' · ') +
         '<div class="srccite">' + (d.osm ? '© OpenStreetMap contributors (ODbL)' : '') + (d.osm && d.qid ? ' · ' : '') + (d.qid ? 'Wikidata (CC0)' : '') + '. Not checked against official surveys.</div></td></tr>' : '') +
-      (d.ca || d.world ? '' : '<tr><td>Listed in</td><td>' + (d.added ? 'Added from other data sources (not in NOAA\'s 1980 list)' : 'NOAA Thermal Springs List (1980)') +
+      (d.hist ? '<tr><td>Listed in</td><td>Historic site added by hand (not in the spring datasets)<div class="srccite">' + d.hist.sources.map(esc).join('<br>') + '<br>' + esc(d.hist.loc) + '</div></td></tr>' : '') +
+      (d.ca || d.world || d.hist ? '' : '<tr><td>Listed in</td><td>' + (d.added ? 'Added from other data sources (not in NOAA\'s 1980 list)' : 'NOAA Thermal Springs List (1980)') +
         (d.ss || d.moved ? '<div class="srccite">' + (d.ss ? 'Reading: ' + esc(SS_SRC[d.ss[3]] || '') : '') + (d.moved && (!d.ss || d.moved[2] !== d.ss[3]) ? (d.ss ? '<br>' : '') + 'Location: ' + esc(SS_SRC[d.moved[2]] || '') : '') + (/^(Water Quality Portal|Nevada Bureau|New Mexico Bureau)/.test(SS_SRC[(d.ss || d.moved)[d.ss ? 3 : 2]] || '') ? '' : ' · via the <a href="https://doi.org/10.5281/zenodo.8125526" target="_blank" rel="noopener">National Geothermal Data System</a> (CC BY 4.0)') + '</div>' : '') + '</td></tr>') +
       (dist != null ? '<tr><td>Distance from you</td><td>' + Math.round(dist).toLocaleString() + ' mi (straight line)</td></tr>' : '') +
       '</table><div class="gphoto" id="gphoto" hidden></div>' + (MEDIA[d.i] ? '<div class="about" id="sabout"><div class="ab-load">Loading description…</div></div>' : '') + '<a class="gbtn" target="_blank" rel="noopener" href="' + gmaps(d) + '">' + PIN + ' Open in Google Maps</a>' + addPhotoHtml(d);

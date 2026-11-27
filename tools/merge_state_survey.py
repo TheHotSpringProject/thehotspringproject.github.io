@@ -32,6 +32,10 @@ ca = ca_rows(rows, SRC)
 for d in ca:   # origin 'C' = Canada; 13th field lists the Canadian sources that mention the spring
     rows.append([d['name'], d['prov'], d['lat'], d['lon'], d['f'], d['c'], cls(d['f']), '', None,
                  [d['f'], d['c'], None, d['tsrc'], 1] if d['tsrc'] is not None else None, None, 'C', d['srcs']])
+# origin 'H' = historic sites added by hand (data/historic.json), e.g. springs since drilled over; 13th field holds the note and sources
+for h in json.load(open('data/historic.json')):
+    rows.append([h['name'], h['st'], h['lat'], h['lon'], h['f'], h['c'], cls(h['f']), '', None, None, None, 'H',
+                 {'note': h['note'], 'temp': h['temp'], 'loc': h['loc'], 'sources': h['sources']}])
 out = dict(noaa)
 out['fields'] = ['name', 'state', 'lat', 'lon', 'temp_f', 'temp_c', 'class', 'usgs_quad', 'land', 'ss', 'moved', 'origin', 'ca_sources']
 out['ss_source'] = ('State geological survey thermal-spring records from the National Geothermal Data System, republished as AASG-GDS '

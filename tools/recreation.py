@@ -18,6 +18,8 @@ def put(r, code, why, src):
     if k in basis and RANK[basis[k]] <= RANK[src]: return          # two records at one spot: the better-founded call wins
     out[k] = [code, why]; basis[k] = src; why_src[src] = why_src.get(src, 0) + 1
 for i, r in enumerate(S):
+    if r[11] == 'H':   # historic site added by hand: drilled over or gone, no soaking
+        put(r, 'N', 'Historic site: the springs were drilled over; no public soaking', 'hand'); continue
     if r[11] == 'C':   # Canada: judged by name; otherwise only temperature-based fallbacks (no land database north of the border)
         if r[0] in CA: put(r, CA[r[0]][0], CA[r[0]][1], 'hand'); continue
         if r[4] is None or r[4] < 90: continue
