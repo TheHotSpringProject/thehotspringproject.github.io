@@ -387,3 +387,4 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 
 /* Discover on wider screens: the side panel's full height */
 @media (min-width:761px){#detail.full{max-height:calc(100vh - 120px)}}
+.vcheck{background:none;border:0;pointer-events:none}

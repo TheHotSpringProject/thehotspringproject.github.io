@@ -343,7 +343,7 @@
   }
   map.on('zoomend', restyle);
   // Starred (saved) springs get a yellow halo on the map
-  const haloLayer = L.layerGroup().addTo(map);
+  const haloLayer = L.layerGroup().addTo(map), checkLayer = L.layerGroup().addTo(map);
   function halos() {
     haloLayer.clearLayers();
     const z = map.getZoom(), r = z < 5 ? 4 : z < 7 ? 5 : z < 10 ? 6.5 : 8;
@@ -355,6 +355,17 @@
         fill: true, fillColor: '#ffd23f', fillOpacity: .18, interactive: false}).addTo(haloLayer);
     });
     haloLayer.eachLayer(l => l.bringToBack && l.bringToBack());
+    // Visited springs get a small green check mark at the top right of their dot
+    checkLayer.clearLayers();
+    visited.forEach(i => {
+      const d = S[i]; if (!d) return;
+      const shown = cluster ? (d.inC && map.hasLayer(d.hit || d.m)) : map.hasLayer(d.m);
+      if (!shown) return;
+      const off = (d === sel ? r + 2 : r) + (d.known ? 3 : 1);
+      L.marker([d.lat, d.lon], {interactive: false, keyboard: false, zIndexOffset: 1000,
+        icon: L.divIcon({className: 'vcheck', iconSize: [15, 15], iconAnchor: [7.5 - off, 7.5 + off],
+          html: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="#2e9e55" stroke="#fff" stroke-width="1.6"/><path d="M4.6 8.3l2.2 2.2 4.6-4.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'})}).addTo(checkLayer);
+    });
   }
   map.on('baselayerchange', restyle);
 
@@ -465,7 +476,7 @@
       b.title = which === 'sav' ? (on ? 'Saved' : 'Save') : (on ? 'Visited' : 'Mark visited');
       const l = b.querySelector('.ibl'); if (l) l.textContent = which === 'sav' ? (on ? 'Saved' : 'Save') : (on ? 'Visited' : 'Visited?');
     });
-    if (which === 'sav') restyle(); renderList();
+    if (which === 'sav') restyle(); else halos(); renderList();
   }
   function select(d, fly) {
     sel = d; restyle(); if (map.hasLayer(d.m) && d.m.bringToFront) d.m.bringToFront();
