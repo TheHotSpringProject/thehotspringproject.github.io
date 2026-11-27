@@ -198,7 +198,7 @@
     const picked = pk.s || {};
     Object.entries(picked).forEach(([i, fs]) => { if (fs.length) MEDIA[i] = [(MEDIA[i] || [''])[0], fs[0]]; });
     Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
-    Object.entries(picked).forEach(([i, fs]) => { if (!fs.length && MEDIA[i]) MEDIA[i] = [MEDIA[i][0], '']; });
+    Object.entries(picked).forEach(([i, fs]) => { if (!fs.length && MEDIA[i] && !(sub.s || {})[i]) MEDIA[i] = [MEDIA[i][0], '']; });   // a photo shared later still shows
   });
   const recReady = fetch('data/recreation.json?v=8').then(r => r.ok ? r.json() : {}).then(j => { REC = j.r || {}; }).catch(() => {});
   // Worldwide springs (OpenStreetMap + Wikidata): preview only, with ?world in the address
