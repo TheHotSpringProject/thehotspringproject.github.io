@@ -39,6 +39,10 @@ try:
     prev = json.load(open('data/submitted.json')).get('s', {})
 except Exception:
     prev = {}
+# ...and recent uploads by people who have shared photos before (the search index can lag new files by days)
+for user in sorted({r.get('by') for r in prev.values() if r.get('by')}):
+    j = api({'action': 'query', 'list': 'logevents', 'letype': 'upload', 'leuser': user, 'lelimit': 200})
+    titles += [e['title'] for e in (j.get('query') or {}).get('logevents', []) if e.get('title', '').startswith('File:')]
 titles = sorted(set(titles) | {r['file'] for r in prev.values()})
 
 out = {}
