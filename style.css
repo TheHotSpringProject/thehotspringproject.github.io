@@ -391,3 +391,11 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 .legend .mykey{margin:2px 0;padding-top:4px;border-top:1px solid #ddd;color:#555;font-size:11px;white-space:nowrap;display:flex;gap:12px}
 .legend .mykey>div{display:flex;align-items:center;gap:5px}
 .legend .mykey .si,.legend .mykey .si svg{width:15px;height:15px;display:block;flex:none}
+
+/* Several photos for a spring: swipe through them */
+#detail .gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#detail .gal::-webkit-scrollbar{display:none}
+#detail .gal figure{flex:0 0 100%;scroll-snap-align:center;margin:0}
+#detail .galdots{display:flex;justify-content:center;gap:6px;margin:4px 0 6px}
+#detail .galdots span{width:7px;height:7px;border-radius:50%;background:#c9ccd0}
+#detail .galdots span.on{background:var(--navy)}

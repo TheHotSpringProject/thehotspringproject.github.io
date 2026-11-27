@@ -185,6 +185,7 @@
   let MEDIA = {};
   // Curated Wikipedia/Commons links, plus Commons photos geotagged at each spring (data/photos.json) for springs
   // without a curated photo.
+  const MORE_PH = {};   // extra photos per spring (hand-picked), shown as a swipeable strip in the details
   const mediaReady = Promise.all([
     fetch('data/media.json?v=5').then(r => r.ok ? r.json() : {m:{}}).catch(() => ({m:{}})),
     fetch('data/photos.json?v=4').then(r => r.ok ? r.json() : {p:{}}).catch(() => ({p:{}})),
@@ -196,7 +197,7 @@
     Object.entries(sub.s || {}).forEach(([i, r]) => { MEDIA[i] = [(MEDIA[i] || [''])[0], r.file]; });
     // hand-picked in review.html: the first pick is the photo shown; an empty list means none of the Commons photos
     const picked = pk.s || {};
-    Object.entries(picked).forEach(([i, fs]) => { if (fs.length) MEDIA[i] = [(MEDIA[i] || [''])[0], fs[0]]; });
+    Object.entries(picked).forEach(([i, fs]) => { if (fs.length) MEDIA[i] = [(MEDIA[i] || [''])[0], fs[0]]; if (fs.length > 1) MORE_PH[i] = fs.slice(1); });
     Object.entries(ph.p || {}).forEach(([i, f]) => { if (!MEDIA[i]) MEDIA[i] = ['', f]; else if (!MEDIA[i][1]) MEDIA[i] = [MEDIA[i][0], f]; });
     Object.entries(picked).forEach(([i, fs]) => { if (!fs.length && MEDIA[i] && !(sub.s || {})[i]) MEDIA[i] = [MEDIA[i][0], '']; });   // a photo shared later still shows
   });
@@ -727,7 +728,7 @@
   {
     const det = $('detail'); let x0 = null, y0 = 0, t0 = 0;
     det.addEventListener('touchstart', e => {
-      if (e.touches.length !== 1 || !det.querySelector('.nearnav')) { x0 = null; return; }
+      if (e.touches.length !== 1 || !det.querySelector('.nearnav') || e.target.closest('.gal')) { x0 = null; return; }
       x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
     }, {passive: true});
     det.addEventListener('touchend', e => {
@@ -783,27 +784,38 @@
       const p = j.query && j.query.pages && j.query.pages[0];
       if (p && !p.missing && p.extract) out.wiki = {title:p.title, text:p.extract, url:p.fullurl, edited:p.revisions && p.revisions[0] && p.revisions[0].timestamp};
     }).catch(() => {}));
-    if (file) jobs.push(wikiApi(WC_API, wcParams(file)).then(j => {
+    if (file) jobs.push(photoInfo(file).then(ph => { if (ph) out.photo = ph; }));
+    await Promise.all(jobs);
+    return mediaCache[i] = out;
+  }
+  const photoCache = {};
+  function photoInfo(file) {
+    if (photoCache[file]) return photoCache[file];
+    const out = {};
+    return photoCache[file] = wikiApi(WC_API, wcParams(file)).then(j => {
       const p = j.query && j.query.pages && j.query.pages[0], ii = p && p.imageinfo && p.imageinfo[0];
       if (!ii) return; const md = ii.extmetadata || {}; const v = k => md[k] && md[k].value;
       const lic = stripHtml(v('LicenseShortName'));
       if (!/cc|public domain|pd|gfdl|no restrictions/i.test(lic) || /fair use|non-free/i.test(lic)) return;
-      out.photo = {src:ii.thumburl || ii.url, page:ii.descriptionurl, artist:stripHtml(v('Artist')) || 'Unknown author', license:lic, licenseUrl:v('LicenseUrl') || '', taken:v('DateTimeOriginal') ? stripHtml(v('DateTimeOriginal')) : '', uploaded:v('DateTime') || ''};
-    }).catch(() => {}));
-    await Promise.all(jobs);
-    return mediaCache[i] = out;
+      return {src:ii.thumburl || ii.url, page:ii.descriptionurl, artist:stripHtml(v('Artist')) || 'Unknown author', license:lic, licenseUrl:v('LicenseUrl') || '', taken:v('DateTimeOriginal') ? stripHtml(v('DateTimeOriginal')) : '', uploaded:v('DateTime') || ''};
+    }).catch(() => null);
   }
   async function loadAbout(d) {
     const m = await getMedia(d.i);
     const box = $('sabout'); if (!box || sel !== d) return;
     let h = '';
-    if (m.photo) {
-      const tk = fmtDate(m.photo.taken), up = fmtDate(m.photo.uploaded);
+    const extra = (await Promise.all((MORE_PH[d.i] || []).map(photoInfo))).filter(Boolean);
+    if (sel !== d) return;
+    const photos = (m.photo ? [m.photo] : []).concat(extra);
+    const fig = ph => {
+      const tk = fmtDate(ph.taken), up = fmtDate(ph.uploaded);
       const when = tk ? 'taken ' + tk : up ? 'uploaded ' + up : '';
-      h += '<figure><a href="' + esc(m.photo.page) + '" target="_blank" rel="noopener"><img crossorigin="anonymous" src="' + esc(m.photo.src) + '" alt="Photo near ' + esc(title(d.name)) + '" loading="lazy"></a>' +
-        '<figcaption>Photo: ' + esc(m.photo.artist) + ', <a href="' + esc(m.photo.page) + '" target="_blank" rel="noopener">Wikimedia Commons</a> · ' +
-        (m.photo.licenseUrl ? '<a href="' + esc(m.photo.licenseUrl) + '" target="_blank" rel="noopener">' + esc(m.photo.license) + '</a>' : esc(m.photo.license)) + (when ? ' · ' + when : '') + '</figcaption></figure>';
-    }
+      return '<figure><a href="' + esc(ph.page) + '" target="_blank" rel="noopener"><img crossorigin="anonymous" src="' + esc(ph.src) + '" alt="Photo of ' + esc(title(d.name)) + '" loading="lazy"></a>' +
+        '<figcaption>Photo: ' + esc(ph.artist) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">Wikimedia Commons</a> · ' +
+        (ph.licenseUrl ? '<a href="' + esc(ph.licenseUrl) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a>' : esc(ph.license)) + (when ? ' · ' + when : '') + '</figcaption></figure>';
+    };
+    if (photos.length === 1) h += fig(photos[0]);
+    else if (photos.length > 1) h += '<div class="gal">' + photos.map(fig).join('') + '</div><div class="galdots">' + photos.map((_, k) => '<span' + (k ? '' : ' class="on"') + '></span>').join('') + '</div>';
     if (m.wiki) {
       const txt = m.wiki.text.length > 700 ? m.wiki.text.slice(0, 700).replace(/\s+\S*$/, '') + '…' : m.wiki.text;
       h += '<p class="ab-text"></p><div class="ab-src">From Wikipedia, <a href="' + esc(m.wiki.url) + '" target="_blank" rel="noopener">“' + esc(m.wiki.title) + '”</a>' +
@@ -811,6 +823,11 @@
       box.innerHTML = h; box.querySelector('.ab-text').textContent = txt;
     } else box.innerHTML = h || '';
     if (!h) box.remove();
+    const gal = box.querySelector('.gal');
+    if (gal) gal.addEventListener('scroll', () => {
+      const k = Math.round(gal.scrollLeft / gal.clientWidth);
+      box.querySelectorAll('.galdots span').forEach((sp, n) => sp.classList.toggle('on', n === k));
+    }, {passive: true});
   }
 
   // ---------- Google Maps place photo (Places API, shown live; nothing is stored) ----------
