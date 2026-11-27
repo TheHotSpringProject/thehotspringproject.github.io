@@ -464,12 +464,12 @@
   let discList = [], discShown = 0, discBack = null;
   function backToDiscover() {
     const det = $('detail'), b = discBack; discBack = null;
-    det.innerHTML = ''; det.appendChild(b.keep); det.style.display = 'block'; det.dataset.i = '';
+    det.innerHTML = ''; det.appendChild(b.keep); det.style.display = 'block'; det.dataset.i = ''; det.classList.add('full');
     requestAnimationFrame(() => { det.scrollTop = b.scroll; });
   }
   function openDiscover() {
     discBack = null; $('detail').dataset.i = '';
-    const det = $('detail'); det.style.display = 'block';
+    const det = $('detail'); det.style.display = 'block'; det.classList.add('full');   // Discover uses the whole screen
     det.innerHTML = '<div class="dhead"><h2>Discover springs</h2><button class="x" title="Close">✕</button></div>' +
       '<div class="dbody"><form class="dfind" id="dfind" autocomplete="off"><input type="search" id="dq" placeholder="Search near a town, address or place" aria-label="Search near a place" enterkeyhint="search">' +
       '<button type="submit" class="dgo" aria-label="Search">' + I_SEARCH + '</button><button type="button" class="dme" id="dme" title="Use my location">' + I_NEARME + '<span>Near me</span></button></form>' +
@@ -566,7 +566,7 @@
   }
 
   function showDetail(d) {
-    const det = $('detail'); det.style.display = 'block'; det.dataset.i = d.i;
+    const det = $('detail'); det.style.display = 'block'; det.dataset.i = d.i; det.classList.remove('full');
     const lat = Math.abs(d.lat).toFixed(3) + '°' + (d.lat >= 0 ? 'N' : 'S'), lon = Math.abs(d.lon).toFixed(3) + '°' + (d.lon < 0 ? 'W' : 'E');
     const dist = distMi(d);
     det.innerHTML = '<button class="x" title="Close">✕</button><h2>' + esc(title(d.name)) + '</h2>' +
