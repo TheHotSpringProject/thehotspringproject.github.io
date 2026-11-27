@@ -388,3 +388,6 @@ aside{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);di
 /* Discover on wider screens: the side panel's full height */
 @media (min-width:761px){#detail.full{max-height:calc(100vh - 120px)}}
 .vcheck{background:none;border:0;pointer-events:none}
+.legend .mykey{margin:2px 0;padding-top:4px;border-top:1px solid #ddd;color:#555;font-size:11px;white-space:nowrap;display:flex;gap:12px}
+.legend .mykey>div{display:flex;align-items:center;gap:5px}
+.legend .mykey .si,.legend .mykey .si svg{width:15px;height:15px;display:block;flex:none}
