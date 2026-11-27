@@ -335,12 +335,27 @@
 
   // ---------- Marker size by zoom ----------
   function restyle() {
+    if (typeof halos === 'function' && S.length) setTimeout(halos, 0);
     const z = map.getZoom(), r = z < 5 ? 4 : z < 7 ? 5 : z < 10 ? 6.5 : 8;
     const dk = curBM && (curBM.dark || curBM.imagery);
     // Known soaking spots (commercial or wild) are solid; everything else is about half transparent.
     S.forEach(d => d.known ? (d.hit.setRadius((d === sel ? r + 2 : r) + 4.5), d.ic.setIcon(soakIcon(d, d === sel ? r + 2 : r, d === sel ? '#00a3ff' : saved.has(d.i) ? '#be6b47' : dk ? '#fff' : 'rgba(0,0,0,.75)', d === sel || saved.has(d.i) ? 2.6 : 1.2)).setZIndexOffset(d === sel ? 1000 : 0)) : d.m.setStyle(d === sel ? {radius:r + 3, weight:3, color:'#00a3ff', opacity:1, fillOpacity:1} : saved.has(d.i) ? {radius:r + 1, weight:2.5, color:'#be6b47', opacity:1, fillOpacity:d.known ? 1 : .5} : {radius:r, weight:1, color:dk ? '#fff' : '#000', opacity:d.known ? (dk ? .9 : .7) : (dk ? .4 : .25), fillOpacity:d.known ? 1 : .5}));
   }
   map.on('zoomend', restyle);
+  // Starred (saved) springs get a yellow halo on the map
+  const haloLayer = L.layerGroup().addTo(map);
+  function halos() {
+    haloLayer.clearLayers();
+    const z = map.getZoom(), r = z < 5 ? 4 : z < 7 ? 5 : z < 10 ? 6.5 : 8;
+    saved.forEach(i => {
+      const d = S[i]; if (!d) return;
+      const shown = cluster ? (d.inC && map.hasLayer(d.hit || d.m)) : map.hasLayer(d.m);
+      if (!shown) return;
+      L.circleMarker([d.lat, d.lon], {renderer, radius: (d === sel ? r + 2 : r) + (d.known ? 7 : 5), color: '#ffd23f', weight: 3.5, opacity: .95,
+        fill: true, fillColor: '#ffd23f', fillOpacity: .18, interactive: false}).addTo(haloLayer);
+    });
+    haloLayer.eachLayer(l => l.bringToBack && l.bringToBack());
+  }
   map.on('baselayerchange', restyle);
 
   // ---------- Filtering ----------
@@ -375,6 +390,7 @@
     });
     if (cluster && (toAdd.length || toDel.length)) { cluster.removeLayers(toDel); cluster.addLayers(toAdd); syncIcons(); }
     if (sel && map.hasLayer(sel.m) && sel.m.bringToFront) sel.m.bringToFront();
+    halos();
     const s = sortSel.value, tv = d => d.f == null ? ({B:200, V:175, H:140, W:100, C:60}[d.cls] ?? -1) : d.f;
     const clean = n => n.replace(/^\W+/, '');
     if (s === 'near' && me) visible.forEach(d => d.dist = distMi(d));
